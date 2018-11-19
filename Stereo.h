@@ -1,0 +1,50 @@
+//
+// Created by Piotr Meller on 20.10.18.
+//
+
+#ifndef PRACA_INZYNIERSKA_STEREO_H
+#define PRACA_INZYNIERSKA_STEREO_H
+
+
+//#include <opencv2/opencv.hpp>
+#include <vector>
+#include <string>
+#include "Rectification.h"
+#include "Calibration.h"
+#include "Disparity.h"
+
+
+class Stereo
+{
+public:
+
+	Calibration calib;
+	Rectification rect;
+	Disparity disp;
+
+private:
+    cv::Mat left;
+    cv::Mat right;
+    //cv::Mat left_disp,right_disp,filtered_disp;
+
+    std::vector<cv::KeyPoint> keypoints_left, keypoints_right;
+    std::vector<cv::Point2f> lk,rk;
+
+
+
+
+public:
+	Stereo(const std::string &_left, const std::string &_right, const std::string &_cameraParamsFile);
+
+    void rectifyImage();
+
+    void computeDisp();
+
+    void show();
+
+//private:
+    void match_feautures();
+};
+
+
+#endif //PRACA_INZYNIERSKA_STEREO_H
