@@ -22,6 +22,9 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
+INCLUDEPATH += /usr/local/include
+
+LIBS += -L/usr/local/lib -libopencv_core -libopencv_imgproc -lopencv_imgcodecs -lopencv_highgui -libopencv_flann -libopencv_features2d -libopencv_calib3d -libopencv_ximgproc -libopencv_xfeatures2d
 
 SOURCES += \
         mainwindow.cpp \
