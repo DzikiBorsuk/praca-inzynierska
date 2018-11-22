@@ -4,6 +4,8 @@ cmake_minimum_required(VERSION 3.0)
 project(praca_inzynierska)
 
 set(CMAKE_CXX_STANDARD 17)
+
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -pthread")
 #SET(OpenCV_DIR /installation/OpenCV-/share/OpenCV/)
 
 find_package( OpenCV REQUIRED )

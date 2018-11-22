@@ -24,20 +24,18 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 INCLUDEPATH += /usr/local/include
 
-LIBS += -L/usr/local/lib -libopencv_core -libopencv_imgproc -lopencv_imgcodecs -lopencv_highgui -libopencv_flann -libopencv_features2d -libopencv_calib3d -libopencv_ximgproc -libopencv_xfeatures2d
+LIBS += -L/usr/local/lib -lopencv_core -lopencv_imgproc -lopencv_imgcodecs -lopencv_highgui -lopencv_flann -lopencv_features2d -lopencv_calib3d -lopencv_ximgproc -lopencv_xfeatures2d
 
 SOURCES += \
-        mainwindow.cpp \
     qtsrc/mainwindow.cpp \
+    qtsrc/mainqt.cpp \
     src/Calibration.cpp \
     src/Disparity.cpp \
     src/FeatureMatching.cpp \
     src/Rectification.cpp \
-    src/Stereo.cpp \
-    qtsrc/mainqt.cpp
+    src/Stereo.cpp
 
 HEADERS += \
-        mainwindow.h \
     qtsrc/mainwindow.h \
     src/Calibration.h \
     src/Disparity.h \
@@ -46,7 +44,6 @@ HEADERS += \
     src/Stereo.h
 
 FORMS += \
-        mainwindow.ui \
     qtsrc/mainwindow.ui
 
 DISTFILES +=
