@@ -3,7 +3,7 @@
 //
 
 #include <iostream>
-#include <stdio.h>
+#include <cstdio>
 
 #include "Stereo.h"
 #include <opencv2/opencv.hpp>
@@ -44,12 +44,11 @@ Stereo::Stereo(const std::string &_left, const std::string &_right, const std::s
 
     numberOfImage = imgNum::two;
 
-    if (!_cameraParamsFile.empty()) {
+    if (!_cameraParamsFile.empty())
+    {
         left = calib.undistort(left);
         right = calib.undistort(right);
     }
-
-
 
 }
 
@@ -59,11 +58,11 @@ void Stereo::rectifyImage()
 
     cv::Mat l, r;
 
-    cv::cvtColor(rect.getLeft(),l,CV_BGR2GRAY);
-    cv::cvtColor(rect.getRight(),r,CV_BGR2GRAY);
+    cv::cvtColor(rect.getLeft(), l, CV_BGR2GRAY);
+    cv::cvtColor(rect.getRight(), r, CV_BGR2GRAY);
 
-    cv::resize(l, left, {1920/2, 1080/2});
-    cv::resize(r, right, {1920/2, 1080/2});
+    cv::resize(l, left, {1920 / 2, 1080 / 2});
+    cv::resize(r, right, {1920 / 2, 1080 / 2});
 }
 
 void Stereo::computeDisp()
@@ -87,7 +86,8 @@ void Stereo::show()
 
 void Stereo::match_feautures()
 {
-    if (!left.data || !right.data) {
+    if (!left.data || !right.data)
+    {
         std::cout << " --(!) Error reading images " << std::endl;
         return;
     }
@@ -105,10 +105,13 @@ void Stereo::match_feautures()
     double max_dist = 0;
     double min_dist = 200;
     //-- Quick calculation of max and min distances between keypoints
-    for (int i = 0; i < descriptors_1.rows; i++) {
+    for (int i = 0; i < descriptors_1.rows; i++)
+    {
         double dist = matches[i].distance;
-        if (dist < min_dist) { min_dist = dist; }
-        if (dist > max_dist) { max_dist = dist; }
+        if (dist < min_dist)
+        { min_dist = dist; }
+        if (dist > max_dist)
+        { max_dist = dist; }
     }
     printf("-- Max dist : %f \n", max_dist);
     printf("-- Min dist : %f \n", min_dist);
@@ -119,8 +122,10 @@ void Stereo::match_feautures()
     std::vector<cv::DMatch> good_matches;
     std::vector<int> good_l;
     std::vector<int> good_r;
-    for (int i = 0; i < descriptors_1.rows; i++) {
-        if (matches[i].distance <= std::max(2 * min_dist, 0.05)) {
+    for (int i = 0; i < descriptors_1.rows; i++)
+    {
+        if (matches[i].distance <= std::max(2 * min_dist, 0.05))
+        {
             good_matches.push_back(matches[i]);
             //good.push_back(i);//Todo:  poprawic
 
@@ -142,7 +147,8 @@ void Stereo::match_feautures()
     //cv::namedWindow("Good Matches", cv::WINDOW_NORMAL);
     //cv::imshow("Good Matches", img_matches);
     //cv::resizeWindow("Good Matches", 1200, 900);
-    for (int i = 0; i < (int) good_matches.size(); i++) {
+    for (int i = 0; i < (int) good_matches.size(); i++)
+    {
         printf("-- Good Match [%d] Keypoint 1: %d  -- Keypoint 2: %d  \n", i, good_matches[i].queryIdx,
                good_matches[i].trainIdx);
     }

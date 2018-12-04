@@ -9,13 +9,12 @@
 
 class FeatureMatching
 {
-	std::vector<cv::KeyPoint> keypoints_left, keypoints_right;
-	std::vector<cv::Point2f> lk, rk;
+    std::vector<cv::KeyPoint> keypoints_left, keypoints_right;
+    std::vector<cv::Point2f> lk, rk;
 
 public:
-	FeatureMatching();
-	~FeatureMatching();
-
+    FeatureMatching();
+    ~FeatureMatching();
 
 };
 

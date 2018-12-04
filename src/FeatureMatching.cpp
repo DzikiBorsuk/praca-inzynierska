@@ -5,11 +5,9 @@
 #include "FeatureMatching.h"
 
 
-
 FeatureMatching::FeatureMatching()
 {
 }
-
 
 FeatureMatching::~FeatureMatching()
 {

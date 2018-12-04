@@ -10,7 +10,7 @@
 
 class Disparity
 {
-  public:
+public:
 
     cv::Mat left_disp, right_disp, filtered_disp;
 

@@ -29,23 +29,22 @@ void Disparity::initSGBM(int _minDisparity,
                          int _speckleRange,
                          int _mode)
 {
-    minDisparity=_minDisparity;
-    maxDisparity=_maxDisparities;
+    minDisparity = _minDisparity;
+    maxDisparity = _maxDisparities;
     blockSize = _blockSize;
-    P1=_P1;
-    P2=_P2;
-    disp12MaxDiff=_disp12MaxDiff;
-    preFilterCap=_preFilterCap;
-    uniquenessRatio=_uniquenessRatio;
-    speckleWindowSize=_speckleWindowSize;
-    speckleRange= _speckleRange;
+    P1 = _P1;
+    P2 = _P2;
+    disp12MaxDiff = _disp12MaxDiff;
+    preFilterCap = _preFilterCap;
+    uniquenessRatio = _uniquenessRatio;
+    speckleWindowSize = _speckleWindowSize;
+    speckleRange = _speckleRange;
 
     setMatcher();
 }
 
 Disparity::~Disparity()
-{
-}
+= default;
 
 void Disparity::SGBM(const cv::Mat &left, const cv::Mat &right)
 {

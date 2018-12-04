@@ -20,7 +20,7 @@ foreach(_headerFile ${HEADER_FILES})
 endforeach()
 list(REMOVE_DUPLICATES INCLUDE_DIRS)
 
-add_executable (praca_inzynierska ${SOURCE_FILES})
+add_executable (praca_inzynierska ${SOURCE_FILES} src/StereoCalibration.cpp src/StereoCalibration.h)
 target_include_directories(praca_inzynierska PRIVATE ${INCLUDE_DIRS})
 
 #add_executable(praca_inzynierska cmake-build-debug/src/main.cpp cmake-build-debug/src/Stereo.cpp cmake-build-debug/src/Stereo.h cmake-build-debug/src/Rectification.cpp cmake-build-debug/src/Rectification.h cmake-build-debug/src/Calibration.cpp cmake-build-debug/src/Calibration.h cmake-build-debug/src/Disparity.cpp cmake-build-debug/src/Disparity.h cmake-build-debug/src/FeatureMatching.cpp cmake-build-debug/src/FeatureMatching.h)

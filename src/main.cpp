@@ -9,11 +9,10 @@
 int main()
 {
     //Stereo stereo("n_left.jpg","n_right.jpg");
-    Stereo stereo("2.JPG","3.JPG","out_camera_data.xml");
+    Stereo stereo("2.JPG", "3.JPG", "out_camera_data.xml");
 
     stereo.match_feautures();
-	stereo.rectifyImage();
-	stereo.computeDisp();
-
+    stereo.rectifyImage();
+    stereo.computeDisp();
 
 }

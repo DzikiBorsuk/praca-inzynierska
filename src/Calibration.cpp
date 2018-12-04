@@ -4,36 +4,43 @@
 
 #include "Calibration.h"
 #include <opencv2/ccalib.hpp>
-
-
+#include <opencv2/highgui.hpp>
 
 Calibration::Calibration(std::string filename)
 {
-	cv::FileStorage fs;
-	fs.open(filename, cv::FileStorage::READ);
-	fs["camera_matrix"] >> cameraMatrix;
-	fs["distortion_coefficients"] >> distortionCoefficient;
-	fs.release();
+    cv::FileStorage fs;
+    fs.open(filename, cv::FileStorage::READ);
+    fs["camera_matrix"] >> cameraMatrix;
+    fs["distortion_coefficients"] >> distortionCoefficient;
+    fs.release();
 }
 
-
-Calibration::~Calibration()
-{
-}
+Calibration::~Calibration() = default;
 
 cv::Mat Calibration::getCameraMatrix()
 {
-	return cameraMatrix.clone();
+    return cameraMatrix.clone();
 }
 
 cv::Mat Calibration::getDistortionCoefficient()
 {
-	return distortionCoefficient.clone();
+    return distortionCoefficient.clone();
 }
 
-cv::Mat Calibration::undistort(const cv::Mat & img)
+void Calibration::calibrateCamera(std::vector<std::string> image_path_list, cv::Size patern_size)
 {
-	cv::Mat undistort;
-	cv::undistort(img, undistort, cameraMatrix, distortionCoefficient);
-	return undistort;
+
+    cv::Mat image;
+    for (int i = 0; i < image_path_list.size(); ++i)
+    {
+        image =
+    }
+
+}
+
+cv::Mat Calibration::undistort(const cv::Mat &img)
+{
+    cv::Mat undistort;
+    cv::undistort(img, undistort, cameraMatrix, distortionCoefficient);
+    return undistort;
 }

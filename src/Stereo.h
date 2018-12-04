@@ -18,30 +18,29 @@ class Stereo
 {
 public:
 
-	Calibration calib;
-	Rectification rect;
-	Disparity disp;
+    Calibration calib;
+    Rectification rect;
+    Disparity disp;
 
 private:
-    cv::Mat left,middle,right;
+    cv::Mat left, middle, right;
     //cv::Mat left_disp,right_disp,filtered_disp;
     //bool run_calibration;
 
     std::vector<cv::KeyPoint> keypoints_left, keypoints_right;
-    std::vector<cv::Point2f> lk,rk;
+    std::vector<cv::Point2f> lk, rk;
 
-    enum class imgNum{
-    	two=2,three=3,
+    enum class imgNum
+    {
+        two = 2, three = 3,
     };
 
-	imgNum numberOfImage;
-
-
+    imgNum numberOfImage;
 
 
 public:
     //Stereo(const std::string[] img, const std::string &_middle, const std::string &_right, const std::string &_cameraParamsFile="");
-	Stereo(const std::string &_left, const std::string &_right, const std::string &_cameraParamsFile="");
+    Stereo(const std::string &_left, const std::string &_right, const std::string &_cameraParamsFile = "");
 
     void rectifyImage();
 
