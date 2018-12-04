@@ -56,6 +56,14 @@ Stereo::Stereo(const std::string &_left, const std::string &_right, const std::s
 void Stereo::rectifyImage()
 {
     rect.DSR(left, lk, right, rk);
+
+    cv::Mat l, r;
+
+    cv::cvtColor(rect.getLeft(),l,CV_BGR2GRAY);
+    cv::cvtColor(rect.getRight(),r,CV_BGR2GRAY);
+
+    cv::resize(l, left, {1920/2, 1080/2});
+    cv::resize(r, right, {1920/2, 1080/2});
 }
 
 void Stereo::computeDisp()
@@ -64,11 +72,11 @@ void Stereo::computeDisp()
 
     //disp.SGBM(rect.getLeft(), rect.getRight());
 
-    cv::Mat l, r;
-    cv::resize(rect.getLeft(), l, {1920, 1080});
-    cv::resize(rect.getRight(), r, {1920, 1080});
+    //cv::Mat l, r;
+    //cv::resize(rect.getLeft(), l, {1920, 1080});
+    //cv::resize(rect.getRight(), r, {1920, 1080});
 
-    disp.SGBM(l, r);
+    disp.SGBM(left, right);
 
 }
 

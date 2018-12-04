@@ -10,7 +10,11 @@
 
 class Disparity
 {
+  public:
+
     cv::Mat left_disp, right_disp, filtered_disp;
+
+    cv::Mat vis_left, vis_right, vis_filter;
 
     //cv::Ptr<cv::StereoSGBM> left_matcher, right_matcher;
     cv::Ptr<cv::StereoSGBM> left_matcher;
@@ -50,7 +54,7 @@ public:
     ~Disparity();
 
     void initSGBM(int minDisparity = 0,
-                  int numDisparities = 16,
+                  int maxDisparities = 16,
                   int blockSize = 3,
                   int P1 = 0,
                   int P2 = 0,
@@ -70,16 +74,14 @@ public:
     void setMinDisparity(int minDisparity)
     {
         this->minDisparity = minDisparity;
-        setMatcher();
     }
-    int getMaxDisparities() const
+    int getMaxDisparity() const
     {
         return maxDisparity;
     }
-    void setMaxDisparities(int numDisparities)
+    void setMaxDisparity(int numDisparities)
     {
         this->maxDisparity = numDisparities;
-        setMatcher();
     }
     int getBlockSize() const
     {
@@ -88,7 +90,6 @@ public:
     void setBlockSize(int blockSize)
     {
         this->blockSize = blockSize;
-        setMatcher();
     }
     int getP1() const
     {
@@ -97,7 +98,6 @@ public:
     void setP1(int P1)
     {
         this->P1 = P1;
-        setMatcher();
     }
     int getP2() const
     {
@@ -106,7 +106,6 @@ public:
     void setP2(int P2)
     {
         this->P2 = P2;
-        setMatcher();
     }
     int getDisp12MaxDiff() const
     {
@@ -115,7 +114,6 @@ public:
     void setDisp12MaxDiff(int disp12MaxDiff)
     {
         this->disp12MaxDiff = disp12MaxDiff;
-        setMatcher();
     }
     int getPreFilterCap() const
     {
@@ -124,7 +122,6 @@ public:
     void setPreFilterCap(int preFilterCap)
     {
         this->preFilterCap = preFilterCap;
-        setMatcher();
     }
     int getUniquenessRatio() const
     {
@@ -133,7 +130,6 @@ public:
     void setUniquenessRatio(int uniquenessRatio)
     {
         this->uniquenessRatio = uniquenessRatio;
-        setMatcher();
     }
     int getSpeckleWindowSize() const
     {
@@ -142,7 +138,6 @@ public:
     void setSpeckleWindowSize(int speckleWindowSize)
     {
         this->speckleWindowSize = speckleWindowSize;
-        setMatcher();
     }
     int getSpeckleRange() const
     {
@@ -151,7 +146,6 @@ public:
     void setSpeckleRange(int speckleRange)
     {
         this->speckleRange = speckleRange;
-        setMatcher();
     }
     int getMode() const
     {
@@ -160,7 +154,6 @@ public:
     void setMode(int mode)
     {
         this->mode = mode;
-        setMatcher();
     }
 
 };

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1169</width>
-    <height>754</height>
+    <height>756</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -33,21 +33,14 @@
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
-          <property name="text">
-           <string>TextLabel</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="1">
-         <widget class="QLabel" name="label_disparity">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
+          <property name="minimumSize">
+           <size>
+            <width>561</width>
+            <height>310</height>
+           </size>
           </property>
           <property name="text">
-           <string>TextLabel</string>
+           <string>Right_img</string>
           </property>
          </widget>
         </item>
@@ -59,8 +52,14 @@
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="minimumSize">
+           <size>
+            <width>561</width>
+            <height>310</height>
+           </size>
+          </property>
           <property name="text">
-           <string>TextLabel</string>
+           <string>Left_img</string>
           </property>
          </widget>
         </item>
@@ -91,6 +90,12 @@
              </item>
              <item row="0" column="2">
               <widget class="QLabel" name="label_minDisparity_value">
+               <property name="minimumSize">
+                <size>
+                 <width>50</width>
+                 <height>0</height>
+                </size>
+               </property>
                <property name="text">
                 <string>TextLabel</string>
                </property>
@@ -288,6 +293,25 @@
             </layout>
            </item>
           </layout>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QLabel" name="label_disparity">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>561</width>
+            <height>310</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>TextLabel</string>
+          </property>
          </widget>
         </item>
        </layout>

@@ -5,7 +5,8 @@
 #include "Rectification.h"
 #include <opencv2/ccalib.hpp>
 #include <opencv2/highgui.hpp>
-
+#include <iostream>
+#include <vector>
 
 Rectification::Rectification()
 {
@@ -20,25 +21,24 @@ Rectification::~Rectification()
 
 void Rectification::Hartley(const cv::Mat & left, std::vector<cv::Point2f> left_points, const cv::Mat & right, std::vector<cv::Point2f> right_points)
 {
-	cv::Mat homLeft, homRight;
-
-	cv::Mat fundMatrix = cv::findFundamentalMat(left_points, right_points, CV_FM_RANSAC,0.5);
-	cv::stereoRectifyUncalibrated(left_points, right_points, fundMatrix, right.size(), homLeft, homRight);
-
-	cv::warpPerspective(left, rect_left, homLeft,left.size());
-	cv::warpPerspective(right, rect_right, homRight, right.size());
-	
-}
-
-void Rectification::LoopZhang(const cv::Mat & left, std::vector<cv::Point2f> left_points, const cv::Mat & right, std::vector<cv::Point2f> right_points)
-{
-	cv::Mat homLeft, homRight;
 
 	cv::Mat fundMatrix = cv::findFundamentalMat(left_points, right_points, CV_FM_RANSAC, 0.5);
 	cv::stereoRectifyUncalibrated(left_points, right_points, fundMatrix, right.size(), homLeft, homRight);
 
 	//cv::warpPerspective(left, rect_left, homLeft, left.size());
-	cv::warpPerspective(right, rect_right, homRight, right.size());
+	//cv::warpPerspective(right, rect_right, homRight, right.size());
+
+	warp_image(left, right);
+}
+
+void Rectification::LoopZhang(const cv::Mat & left, std::vector<cv::Point2f> left_points, const cv::Mat & right, std::vector<cv::Point2f> right_points)
+{
+
+	cv::Mat fundMatrix = cv::findFundamentalMat(left_points, right_points, CV_FM_RANSAC, 0.5);
+	cv::stereoRectifyUncalibrated(left_points, right_points, fundMatrix, right.size(), homLeft, homRight);
+
+	//cv::warpPerspective(left, rect_left, homLeft, left.size());
+	//cv::warpPerspective(right, rect_right, homRight, right.size());
 
 	cv::Size imsize = left.size();
 
@@ -62,9 +62,11 @@ void Rectification::LoopZhang(const cv::Mat & left, std::vector<cv::Point2f> lef
 
 	cv::Mat Hs(3, 3, CV_64F, data1);
 
-	cv::Mat H = Hs * homLeft;
+	homLeft = Hs * homLeft;
 
-	cv::warpPerspective(left, rect_left, H, left.size());
+	//cv::warpPerspective(left, rect_left, homLeft, left.size());
+
+	warp_image(left, right);
 }
 
 void Rectification::DSR(const cv::Mat & left, std::vector<cv::Point2f> left_points, const cv::Mat & right, std::vector<cv::Point2f> right_points)
@@ -203,7 +205,8 @@ void Rectification::DSR(const cv::Mat & left, std::vector<cv::Point2f> left_poin
 
 	std::vector<int> mask;
 
-	cv::findHomography(left_points, right_points, mask, CV_RANSAC);
+	cv::findHomography(left_points, right_points, CV_RANSAC, 3, mask, 10000, 0.9899999999999999911);
+	//cv::findFundamentalMat(left_points, right_points, CV_FM_RANSAC, 1, 0.9899999999999999911, mask);
 	std::vector<cv::Point2f> in_lk, in_rk;
 	in_lk.reserve(mask.size());
 	in_rk.reserve(mask.size());
@@ -211,7 +214,7 @@ void Rectification::DSR(const cv::Mat & left, std::vector<cv::Point2f> left_poin
 	{
 		if (mask[i] != 0)
 		{
-			in_lk.push_back(left_points [i]);
+			in_lk.push_back(left_points[i]);
 			in_rk.push_back(right_points[i]);
 		}
 	}
@@ -255,9 +258,9 @@ void Rectification::DSR(const cv::Mat & left, std::vector<cv::Point2f> left_poin
 
 	auto imsize = left.size();
 	double data[] = { static_cast<double>(imsize.width) / 2, static_cast<double>(imsize.width),
-					static_cast<double>(imsize.width) / 2, 0, 0, static_cast<double>(imsize.height),
-					static_cast<double>(imsize.height),
-					static_cast<double>(imsize.height) / 2 };
+					  static_cast<double>(imsize.width) / 2, 0, 0, static_cast<double>(imsize.height),
+					  static_cast<double>(imsize.height),
+					  static_cast<double>(imsize.height) / 2 };
 	cv::Mat vertex(2, 4, CV_64F, data);
 
 
@@ -379,24 +382,29 @@ void Rectification::DSR(const cv::Mat & left, std::vector<cv::Point2f> left_poin
 
 	H = Hk * Hs* Hy;
 
-	cv::Mat r, rr, hk, hs, hy;
+	//cv::Mat r, rr, hk, hs, hy;
 
-	cv::warpPerspective(right, r, H, right.size());
+	//cv::warpPerspective(right, r, H, right.size());
 
-	cv::warpPerspective(right, rr, Hs* Hy, right.size());
+	//cv::warpPerspective(right, rr, Hs* Hy, right.size());
 
-	cv::warpPerspective(right, hk, Hk, right.size());
-	cv::warpPerspective(right, hs, Hs, right.size());
-	cv::warpPerspective(right, hy, Hy, right.size());
+	//cv::warpPerspective(right, hk, Hk, right.size());
+	//cv::warpPerspective(right, hs, Hs, right.size());
+	//cv::warpPerspective(right, hy, Hy, right.size());
 
-	rect_left = left;
-	rect_right = rr;
+	//rect_left = left;
+	//rect_right = rr;
 
-	cv::imwrite("s.png", rect_left);
-	cv::imwrite("l.png", rect_right);
+	//cv::imwrite("s.png", rect_left);
+	//cv::imwrite("l.png", rect_right);
 
-	rect_left = rr;
-	rect_right = left;
+
+	homLeft = cv::Mat::eye(3, 3, CV_64F);
+	homRight = Hs * Hy;
+
+	warp_image(left, right);
+
+	//this->calcError(in_lk, in_rk);
 
 	//cv::imshow("rect", r);
 
@@ -437,6 +445,7 @@ void Rectification::DSR(const cv::Mat & left, std::vector<cv::Point2f> left_poin
 	//cv::imshow("rect", r);
 
 	//cv::waitKey(0);
+
 }
 
 cv::Mat Rectification::getLeft()
@@ -444,7 +453,106 @@ cv::Mat Rectification::getLeft()
 	return rect_left.clone();
 }
 
-cv::Mat Rectification::getRight()
+const cv::Mat Rectification::getRight()
 {
 	return rect_right.clone();
+}
+
+void Rectification::calcError(std::vector<cv::Point2f> left_points, std::vector<cv::Point2f> right_points)
+{
+	std::vector<cv::Point2f> left_points_projection, right_points_projection;
+
+	cv::perspectiveTransform(left_points, left_points_projection, homLeft);
+	cv::perspectiveTransform(right_points, right_points_projection, homRight);
+
+	min_error = DBL_MAX;
+	max_error = 0;
+	avg_error = 0;
+
+	for (int i = 0; i < left_points.size(); ++i)
+	{
+		double error = abs(left_points_projection[i].y - right_points_projection[i].y);
+		if (min_error > error)
+		{
+			min_error = error;
+		}
+		if (max_error < error)
+		{
+			max_error = error;
+		}
+		avg_error += error;
+	}
+
+	avg_error /= left_points.size();
+
+	std::cout << "min error = " << min_error << std::endl;
+	std::cout << "max error = " << max_error << std::endl;
+	std::cout << "avg error = " << avg_error << std::endl;
+
+}
+
+void Rectification::warp_image(const cv::Mat & left, const cv::Mat & right)
+{
+	originalSize = left.size();
+
+	std::vector<cv::Point2f> left_points = { cv::Point2f(0,0),cv::Point2f(originalSize.width - 1,0),cv::Point2f(0,originalSize.height - 1),cv::Point2f(originalSize.width - 1,originalSize.height - 1) };
+	std::vector<cv::Point2f> right_points = left_points;
+
+	std::vector<cv::Point2f> left_points_dst, right_points_dst;
+
+	cv::perspectiveTransform(left_points, left_points_dst, homLeft);
+	cv::perspectiveTransform(right_points, right_points_dst, homRight);
+
+	float min_x = INT16_MAX;
+	float min_y = INT16_MAX;
+	float max_x = INT16_MIN;
+	float max_y = INT16_MIN;
+
+	for (int i = 0; i < 4; i++)
+	{
+		if (left_points_dst[i].x < min_x)
+		{
+			min_x = left_points_dst[i].x;
+		}
+		if (left_points_dst[i].x > max_x)
+		{
+			max_x = left_points_dst[i].x;
+		}
+		if (left_points_dst[i].y < min_y)
+		{
+			min_y = left_points_dst[i].y;
+		}
+		if (left_points_dst[i].y > max_y)
+		{
+			max_y = left_points_dst[i].y;
+		}
+
+		if (right_points_dst[i].x < min_x)
+		{
+			min_x = right_points_dst[i].x;
+		}
+		if (right_points_dst[i].x > max_x)
+		{
+			max_x = right_points_dst[i].x;
+		}
+		if (right_points_dst[i].y < min_y)
+		{
+			min_y = right_points_dst[i].y;
+		}
+		if (right_points_dst[i].y > max_y)
+		{
+			max_y = right_points_dst[i].y;
+		}
+	}
+	double data[] = { 1,0,-min_x,0,1,-min_y,0,0,1 };
+
+	cv::Mat temp(3, 3, CV_64F, data);
+
+	homLeftCorrection = temp * homLeft;
+	homRightCorrection = temp * homRight;
+
+	cv::Size size(max_x - min_x + 1, max_y - min_y + 1);
+
+	cv::warpPerspective(left, rect_left, homLeftCorrection, size);
+	cv::warpPerspective(right, rect_right, homRightCorrection, size);
 }
