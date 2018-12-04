@@ -11,15 +11,31 @@ class Calibration
 {
     cv::Mat cameraMatrix;
     cv::Mat distortionCoefficient;
+    std::vector<cv::Mat> imagesArray;
+    std::vector<std::vector<cv::Point2f>> cornersArray;
+    std::vector<std::vector<cv::Point3f>> realCornersArray;
+    std::vector<cv::Mat> rvecArray;
+    std::vector<cv::Mat> tvecArray;
+
 
 public:
+
+    enum PatternType
+    {
+        CHESSBOARD,
+        CIRCLES_GRID,
+        CIRCLES_GRID_ASYMMETRIC
+    };
+
     Calibration(std::string filename);
     ~Calibration();
 
     cv::Mat getCameraMatrix();
     cv::Mat getDistortionCoefficient();
 
-    void calibrateCamera(std::vector<std::string> image_path_list, cv::Size patern_size);
+    void loadImagesList(std::vector<std::string> image_path_list);
+
+    void calibrateCamera(cv::Size patern_size, int patternType = PatternType::CHESSBOARD);
 
     cv::Mat undistort(const cv::Mat &img);
 };
