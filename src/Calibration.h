@@ -23,6 +23,7 @@ class Calibration
     std::vector<double> reprojectionErrorsArray;
     double avgError;
     double avgError2;
+    cv::Mat empty;
 
 
 public:

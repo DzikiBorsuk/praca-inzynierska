@@ -19,6 +19,26 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->setupUi(this);
 
+
+    ui->label_CalibrationImagePreviev->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+    ui->label_matchedFeatures->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+    ui->label_disparity->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+
+
+    QStringList detectorsList=(QStringList()<<"SIFT"<<"SURF"<<"ORB");
+    ui->comboBox_detector->addItems(detectorsList);
+
+    QStringList descriptorsList=(QStringList()<<"SIFT"<<"SURF"<<"ORB");
+    ui->comboBox_descriptor->addItems(descriptorsList);
+
+    QStringList matchersList=(QStringList()<<"Flann"<<"Brute force");
+    ui->comboBox_matcher->addItems(matchersList);
+
+
+
+
+
+
     ui->slider_minDisparity->setRange(-320,320);ui->slider_minDisparity->setValue(-32);
     ui->slider_maxDisparity->setRange(-320,320);ui->slider_maxDisparity->setValue(64);
     ui->slider_blockSize->setRange(1,51);
@@ -43,15 +63,9 @@ MainWindow::MainWindow(QWidget *parent) :
                 connect(slider, SIGNAL(valueChanged(int)), this, SLOT(on_slider_moved(int)));
                 //a++;
             }
-        }
+        }           
 
-        //cv::namedWindow(std::to_string(a));
 
-        //connect(ui->slider_blockSize, SIGNAL(sliderMoved(int)), this, SLOT(on_slider_moved(int)));
-
-        //ui->label_disparity->setPixmap(disparity_pixmap);
-
-        //init_disparity_tab();
         init_calibration_tab();
 
 
@@ -69,10 +83,42 @@ void MainWindow::resizeEvent(QResizeEvent* event)
     // Your code here.
 
     //init_disparity_tab();
+
+    this->newImages=true;
+    this->show_calibration_image(-1,ui->checkBox_showUndistorted->isChecked());
+    this->show_matchedFeatures();
 }
 
 
-//########################### calibration tab ###########################
+void MainWindow::on_actionLeft_image_triggered()
+{
+    QString imageFile = QFileDialog::getOpenFileName(this,
+            tr("Load left image"), "",
+            tr("PNG files (*.png);;JPEG files (.jpeg *.jpg *.JPG *.jpe);;Bitmap files (*.bmp *.dib);;All files (*.*)"));
+
+    QString cameraParamsFile = QFileDialog::getOpenFileName(this,
+            tr("Load left camera params"), "",
+            tr("opencv XML/YAML files (*.xml *.yml);;All Files (*)"));
+
+    this->stereo.loadLeftImage(imageFile.toUtf8().constData(), cameraParamsFile.toUtf8().constData());
+    this->show_matchedFeatures();
+}
+
+void MainWindow::on_actionRight_image_triggered()
+{
+    QString imageFile = QFileDialog::getOpenFileName(this,
+            tr("Load right image"), "",
+            tr("PNG files (*.png);;JPEG files (.jpeg *.jpg *.JPG *.jpe);;Bitmap files (*.bmp *.dib);;All files (*.*)"));
+
+    QString cameraParamsFile = QFileDialog::getOpenFileName(this,
+            tr("Load right camera params"), "",
+            tr("opencv XML/YAML files (*.xml *.yml);;All Files (*)"));
+
+    this->stereo.loadRightImage(imageFile.toUtf8().constData(), cameraParamsFile.toUtf8().constData());
+    this->show_matchedFeatures();
+}
+
+//###################################################### calibration tab ######################################################
 
 void MainWindow::init_calibration_tab()
 {
@@ -198,7 +244,6 @@ void MainWindow::run_calibration(MainWindow *window)
     double error = window->stereo.calib.getAvgError2();
     auto goodImages = window->stereo.calib.getGoodImages();
     auto reprojectionErrors = window->stereo.calib.getReprojectionErrorsArray();
-
     window->ui->tableWidget_imagesList->setRowCount(goodImages.size());
 
     for(int i=0;i<goodImages.size();++i)
@@ -223,10 +268,17 @@ void MainWindow::run_calibration(MainWindow *window)
 }
 
 
+
 void MainWindow::show_calibration_image(int i, bool undistorted)
 {
+
     static int last_i=0;
     static bool last_undistorted=false;
+
+    if(i==-1)
+    {
+        i=last_i;
+    }
 
     if(last_i!=i || last_undistorted!=undistorted || this->newImages)
     {
@@ -234,15 +286,20 @@ void MainWindow::show_calibration_image(int i, bool undistorted)
         last_undistorted=undistorted;
         this->newImages=false;
 
-        cv::Mat image;
+        cv::Mat image,src;
 
         if(undistorted)
         {
-            cv::cvtColor(this->stereo.calib.getUndistortedImage(i),image,CV_BGR2RGB);
+            src = this->stereo.calib.getUndistortedImage(i);
         }
         else
         {
-            cv::cvtColor(this->stereo.calib.getImage(i),image,CV_BGR2RGB);
+            src = this->stereo.calib.getImage(i);
+        }
+
+        if(!src.empty())
+        {
+            cv::cvtColor(src,image,CV_BGR2RGB);
         }
         //cv::Mat disp_color;
         //cv::cvtColor(disp, disp_color, CV_GRAY2RGB);
@@ -257,6 +314,7 @@ void MainWindow::show_calibration_image(int i, bool undistorted)
         //int max_height = std::min(ui->label_disparity->minimumHeight(), disparity_image.height());
         int max_width = ui->label_CalibrationImagePreviev->width();
         int max_height = ui->label_CalibrationImagePreviev->height();
+        ui->label_CalibrationImagePreviev->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
         ui->label_CalibrationImagePreviev->setPixmap(qt_pixmap.scaled(max_width, max_height, Qt::KeepAspectRatio));
 
     }
@@ -264,9 +322,75 @@ void MainWindow::show_calibration_image(int i, bool undistorted)
 
 
 
+//###################################################### feature matching tab ######################################################
 
 
-//########################### disparity tab ###########################
+void MainWindow::on_button_setDetector_clicked()
+{
+    this->stereo.featureMatching.setDetector(0,std::vector<double>());
+}
+
+void MainWindow::on_button_setDescriptor_clicked()
+{
+    this->stereo.featureMatching.setDescriptor(0,std::vector<double>());
+}
+
+void MainWindow::on_button_setMatcher_clicked()
+{
+    this->stereo.featureMatching.setMatcher("",std::vector<double>());
+}
+
+void MainWindow::on_button_matchFeatures_clicked()
+{
+    this->ui->label_status->setText("Matching");
+
+    std::thread thread(run_feature_matching,this);
+    thread.detach();
+}
+
+void MainWindow::run_feature_matching(MainWindow *window)
+{
+    QElapsedTimer timer;
+    timer.start();
+
+    window->stereo.featureMatching.detectKeypoints();
+    window->stereo.featureMatching.extractDescriptor();
+    window->stereo.featureMatching.matchKeypoints();
+
+    auto elapsed = timer.elapsed()/1000.0;
+
+    window->ui->label_status->setText("Matching finished. Time: "+QString::number(elapsed)+"s");
+
+    window->show_matchedFeatures();
+}
+
+void MainWindow::show_matchedFeatures()
+{
+
+    //TODO: clean
+    cv::Mat src = this->stereo.featureMatching.getFeatures();
+
+    cv::Mat img;
+
+    if(!src.empty())
+    {
+        cv::cvtColor(src,img,CV_BGR2RGB);
+    }
+
+    // we finally can convert the image to a QPixmap and display it
+    QImage image = QImage((unsigned char*) img.data, img.cols, img.rows, QImage::Format_RGB888);
+    QPixmap pixmap = QPixmap::fromImage(image);
+
+
+    // some computation to resize the image if it is too big to fit in the GUI
+    //int max_width  = std::min(ui->label_disparity->minimumWidth(),  disparity_image.width());
+    //int max_height = std::min(ui->label_disparity->minimumHeight(), disparity_image.height());
+    int max_width = ui->label_matchedFeatures->width();
+    int max_height = ui->label_matchedFeatures->height();
+    ui->label_matchedFeatures->setPixmap(pixmap.scaled(max_width, max_height, Qt::KeepAspectRatio));
+}
+
+//###################################################### disparity tab ######################################################
 
 void MainWindow::on_slider_moved(int position)
 {

@@ -20,11 +20,15 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
-    static void compute_disp(MainWindow *window);
+private:
 
     static void load_calibration_images(MainWindow *window, std::vector<std::string> imagesList);
 
     static void run_calibration(MainWindow *window);
+
+    static void run_feature_matching(MainWindow *window);
+
+    static void compute_disp(MainWindow *window);
 
 private slots:
 
@@ -41,6 +45,18 @@ private slots:
     void on_actionSave_camera_params_triggered();
 
     void on_actionLoad_camera_params_triggered();
+
+    void on_actionLeft_image_triggered();
+
+    void on_actionRight_image_triggered();
+
+    void on_button_setDetector_clicked();
+
+    void on_button_setDescriptor_clicked();
+
+    void on_button_setMatcher_clicked();
+
+    void on_button_matchFeatures_clicked();
 
 private:
     Ui::MainWindow *ui;
@@ -59,6 +75,10 @@ private:
      void load_calibration_images_init();
 
      void show_calibration_image(int i, bool undistorted);
+
+     //########################### feature matching tab ###########################
+
+     void show_matchedFeatures();
 
 
      //########################### disparity tab ###########################

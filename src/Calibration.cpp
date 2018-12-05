@@ -239,7 +239,7 @@ const cv::Mat &Calibration::getImage(int i) const
     }
     else
     {
-        return cv::Mat();
+        return empty;
     }
 }
 
@@ -251,7 +251,7 @@ const cv::Mat &Calibration::getUndistortedImage(int i) const
     }
     else
     {
-        return cv::Mat();
+        return empty;
     }
 }
 

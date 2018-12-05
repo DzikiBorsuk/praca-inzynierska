@@ -8,6 +8,9 @@ QT       += core gui
 QT       += sql
 QT       += widgets
 
+
+CONFIG += c++11
+
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = praca-inzynierska
