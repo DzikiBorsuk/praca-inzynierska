@@ -43,8 +43,8 @@ public:
     Calibration(std::string filename);
     ~Calibration();
 
-    void loadParams(std::string filename);
-    void saveParams(std::string filename);
+    void loadParams(const std::string &filename);
+    void saveParams(const std::string &filename);
 
     cv::Mat getCameraMatrix();
     cv::Mat getDistortionCoefficient();

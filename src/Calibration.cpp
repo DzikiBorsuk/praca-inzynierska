@@ -13,7 +13,7 @@ Calibration::Calibration(std::string filename)
 
 Calibration::~Calibration() = default;
 
-void Calibration::loadParams(std::string filename)
+void Calibration::loadParams(const std::string &filename)
 {
     cv::FileStorage fs;
     fs.open(filename, cv::FileStorage::READ);
@@ -22,7 +22,7 @@ void Calibration::loadParams(std::string filename)
     fs.release();
 }
 
-void Calibration::saveParams(std::string filename)
+void Calibration::saveParams(const std::string &filename)
 {
     cv::FileStorage fs(filename, cv::FileStorage::WRITE);
 
