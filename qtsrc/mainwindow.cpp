@@ -1,5 +1,9 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+
+#include <QFileDialog>
+#include <QElapsedTimer>
+
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
@@ -9,7 +13,7 @@
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::MainWindow), stereo("img/2.JPG","img/3.JPG","img/out_camera_data.xml"), compute_disparity(false),is_computing_disparity(false)
+    ui(new Ui::MainWindow), newImages(false),compute_disparity(false),is_computing_disparity(false)
 {
 
 
@@ -27,6 +31,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->slider_speckleRange->setRange(0,300);
 
 
+
+
         QListIterator<QObject *> i(ui->frame_disparity->children());
 
         //int a=0;
@@ -34,7 +40,7 @@ MainWindow::MainWindow(QWidget *parent) :
             QSlider* slider;
             if(slider = qobject_cast<QSlider*>(i.next()))
             {
-                connect(slider, SIGNAL(sliderMoved(int)), this, SLOT(on_slider_moved(int)));
+                connect(slider, SIGNAL(valueChanged(int)), this, SLOT(on_slider_moved(int)));
                 //a++;
             }
         }
@@ -45,7 +51,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
         //ui->label_disparity->setPixmap(disparity_pixmap);
 
-        init_disparity_tab();
+        //init_disparity_tab();
+        init_calibration_tab();
 
 
 }
@@ -54,6 +61,212 @@ MainWindow::~MainWindow()
 {
     delete ui;
 }
+
+
+void MainWindow::resizeEvent(QResizeEvent* event)
+{
+    QMainWindow::resizeEvent(event);
+    // Your code here.
+
+    //init_disparity_tab();
+}
+
+
+//########################### calibration tab ###########################
+
+void MainWindow::init_calibration_tab()
+{
+    qRegisterMetaType<QList<QPersistentModelIndex>>("QList<QPersistentModelIndex>");
+    qRegisterMetaType<QAbstractItemModel::LayoutChangeHint>("QAbstractItemModel::LayoutChangeHint");
+
+    ui->tableWidget_imagesList->setSelectionMode(QAbstractItemView::SingleSelection);
+    ui->tableWidget_imagesList->setColumnCount(2);
+    QStringList header;
+    header<<"Image"<<"Reprojection Error";
+    ui->tableWidget_imagesList->setHorizontalHeaderLabels(header);
+    ui->tableWidget_imagesList->horizontalHeader()->setStretchLastSection(true);
+    ui->tableWidget_imagesList->verticalHeader()->setVisible(false);
+}
+
+void MainWindow::on_actionLoad_camera_params_triggered()
+{
+    QString fileName = QFileDialog::getOpenFileName(this,
+            tr("Save camera params"), "",
+            tr("opencv XML/YAML files (*.xml *.yml);;All Files (*)"));
+
+    this->stereo.calib.loadParams(fileName.toUtf8().constData());
+}
+
+void MainWindow::on_actionSave_camera_params_triggered()
+{
+    QString fileName = QFileDialog::getSaveFileName(this,
+            tr("Save camera params"), "",
+            tr("opencv XML/YAML files (*.xml *yml *.yaml);;All Files (*)"));
+
+    this->stereo.calib.saveParams(fileName.toUtf8().constData());
+}
+
+
+void MainWindow::on_button_loadImages_clicked()
+{
+    QStringList filenames = QFileDialog::getOpenFileNames(this,tr("Image calibration list"),QDir::currentPath(),tr("PNG files (*.png);;JPEG files (.jpeg *.jpg *.JPG *.jpe);;Bitmap files (*.bmp *.dib);;All files (*.*)") );
+    if( !filenames.isEmpty() )
+    {
+        std::vector<std::string> imagesList;
+        imagesList.reserve(filenames.size());
+        for (int i =0;i<filenames.size();i++)
+        {
+            imagesList.push_back(filenames.at(i).toUtf8().constData());
+        }
+
+        ui->tableWidget_imagesList->clear();
+        ui->tableWidget_imagesList->setRowCount(0);
+        std::thread thread(load_calibration_images,this,imagesList);
+        thread.detach();
+
+        newImages=true;
+
+        ui->button_loadImages->setEnabled(false);
+        ui->button_calibrate->setEnabled(false);
+        ui->label_status->setText("Loading images");
+    }
+}
+
+void MainWindow::on_button_calibrate_clicked()
+{
+    std::thread thread(run_calibration,this);
+    thread.detach();
+    ui->button_loadImages->setEnabled(false);
+    ui->button_calibrate->setEnabled(false);
+    ui->label_status->setText("Calibrating");
+}
+
+void MainWindow::on_tableWidget_imagesList_cellDoubleClicked(int row, int column)
+{
+    int i = ui->tableWidget_imagesList->item(row,0)->text().toInt();
+    show_calibration_image(i,ui->checkBox_showUndistorted->isChecked());
+}
+
+void MainWindow::on_checkBox_showUndistorted_stateChanged(int arg1)
+{
+   auto item =  ui->tableWidget_imagesList->selectedItems();
+   int row=0;
+   if(!item.isEmpty())
+   {
+       row = item.at(0)->row();
+
+   }
+   row = ui->tableWidget_imagesList->item(row,0)->text().toInt();
+   show_calibration_image(row,ui->checkBox_showUndistorted->isChecked());
+}
+
+
+
+void MainWindow::load_calibration_images(MainWindow *window, std::vector<std::string> imagesList)
+{
+    QElapsedTimer timer;
+    timer.start();
+
+    window->stereo.calib.loadImagesList(imagesList);
+
+    auto elapsed = timer.elapsed()/1000.0;
+
+    window->ui->button_loadImages->setEnabled(true);
+    window->ui->button_calibrate->setEnabled(true);
+    window->ui->label_status->setText("Images Loaded successfully. Time: "+QString::number(elapsed)+"s");
+
+    window->show_calibration_image(0,false);
+}
+
+void MainWindow::run_calibration(MainWindow *window)
+{
+    //TODO: sprawdzić poprawność width i height
+    int width = window->ui->lineEdit_patternWidth->text().toInt();
+    int height = window->ui->lineEdit_patternHeight->text().toInt();
+
+    QElapsedTimer timer;
+    timer.start();
+
+    window->stereo.calib.findCalibrationPoints({width,height});
+    window->stereo.calib.calibrateCamera();
+    window->stereo.calib.calculateReprojectionError();
+    window->stereo.calib.undistortCalibrationImages();
+    //window->stereo.calib.drawPattern();
+
+    auto elapsed = timer.elapsed()/1000.0;
+
+    double error = window->stereo.calib.getAvgError2();
+    auto goodImages = window->stereo.calib.getGoodImages();
+    auto reprojectionErrors = window->stereo.calib.getReprojectionErrorsArray();
+
+    window->ui->tableWidget_imagesList->setRowCount(goodImages.size());
+
+    for(int i=0;i<goodImages.size();++i)
+    {
+        window->ui->tableWidget_imagesList->setItem(i, 0, new QTableWidgetItem(QString::number(i)));
+        if(goodImages[i])
+        {
+        window->ui->tableWidget_imagesList->setItem(i, 1, new QTableWidgetItem(QString::number(reprojectionErrors[i])));
+        }
+        else
+        {
+            window->ui->tableWidget_imagesList->setItem(i, 1, new QTableWidgetItem("not found"));
+        }
+    }
+    window->ui->tableWidget_imagesList->sortItems(1);
+    window->ui->label_avgRepError_value->setText(QString::number(error));
+
+
+    window->ui->button_loadImages->setEnabled(true);
+    window->ui->button_calibrate->setEnabled(true);
+    window->ui->label_status->setText("Calibration finished Time: "+QString::number(elapsed)+"s");
+}
+
+
+void MainWindow::show_calibration_image(int i, bool undistorted)
+{
+    static int last_i=0;
+    static bool last_undistorted=false;
+
+    if(last_i!=i || last_undistorted!=undistorted || this->newImages)
+    {
+        last_i=i;
+        last_undistorted=undistorted;
+        this->newImages=false;
+
+        cv::Mat image;
+
+        if(undistorted)
+        {
+            cv::cvtColor(this->stereo.calib.getUndistortedImage(i),image,CV_BGR2RGB);
+        }
+        else
+        {
+            cv::cvtColor(this->stereo.calib.getImage(i),image,CV_BGR2RGB);
+        }
+        //cv::Mat disp_color;
+        //cv::cvtColor(disp, disp_color, CV_GRAY2RGB);
+
+        // we finally can convert the image to a QPixmap and display it
+        QImage qt_image = QImage((unsigned char*) image.data, image.cols, image.rows, QImage::Format_RGB888);
+        QPixmap qt_pixmap = QPixmap::fromImage(qt_image);
+
+
+        // some computation to resize the image if it is too big to fit in the GUI
+        //int max_width  = std::min(ui->label_disparity->minimumWidth(),  disparity_image.width());
+        //int max_height = std::min(ui->label_disparity->minimumHeight(), disparity_image.height());
+        int max_width = ui->label_CalibrationImagePreviev->width();
+        int max_height = ui->label_CalibrationImagePreviev->height();
+        ui->label_CalibrationImagePreviev->setPixmap(qt_pixmap.scaled(max_width, max_height, Qt::KeepAspectRatio));
+
+    }
+}
+
+
+
+
+
+//########################### disparity tab ###########################
 
 void MainWindow::on_slider_moved(int position)
 {
@@ -215,8 +428,10 @@ void MainWindow::show_disp()
 
 
     // some computation to resize the image if it is too big to fit in the GUI
-    int max_width  = std::min(ui->label_disparity->minimumWidth(),  disparity_image.width());
-    int max_height = std::min(ui->label_disparity->minimumHeight(), disparity_image.height());
+    //int max_width  = std::min(ui->label_disparity->minimumWidth(),  disparity_image.width());
+    //int max_height = std::min(ui->label_disparity->minimumHeight(), disparity_image.height());
+    int max_width = ui->label_disparity->width();
+    int max_height = ui->label_disparity->height();
     ui->label_disparity->setPixmap(disparity_pixmap.scaled(max_width, max_height, Qt::KeepAspectRatio));
 
     if(compute_disparity==true)
@@ -228,10 +443,16 @@ void MainWindow::show_disp()
 
 void MainWindow::init_disparity_tab()
 {
-    stereo.match_feautures();
-    stereo.rectifyImage();
-    stereo.disp.initSGBM();
-    stereo.computeDisp();
+    static bool a= true;
+
+    if(a)
+    {
+        a=false;
+        stereo.match_feautures();
+        stereo.rectifyImage();
+        stereo.disp.initSGBM();
+        stereo.computeDisp();
+    }
 
     cv::Mat disp = stereo.disp.vis_filter;
 
@@ -244,8 +465,10 @@ void MainWindow::init_disparity_tab()
 
 
     // some computation to resize the image if it is too big to fit in the GUI
-    int max_width  = std::min(ui->label_disparity->minimumWidth(),  disparity_image.width());
-    int max_height = std::min(ui->label_disparity->minimumHeight(), disparity_image.height());
+    //int max_width  = std::min(ui->label_disparity->width(),  disparity_image.width());
+    //int max_height = std::min(ui->label_disparity->height(), disparity_image.height());
+    int max_width = ui->label_disparity->width();
+    int max_height = ui->label_disparity->height();
     ui->label_disparity->setPixmap(disparity_pixmap.scaled(max_width, max_height, Qt::KeepAspectRatio));
 
 
@@ -263,14 +486,12 @@ void MainWindow::init_disparity_tab()
     QImage right_image = QImage((unsigned char*) right.data, right.cols, right.rows, QImage::Format_RGB888);
     QPixmap right_pixmap = QPixmap::fromImage(right_image);
 
-
     // some computation to resize the image if it is too big to fit in the GUI
-    int max_width_left  = std::min(ui->label_leftImage->minimumWidth(),  left_image.width());
-    int max_height_left = std::min(ui->label_leftImage->minimumHeight(), left_image.height());
+    int max_width_left  = ui->label_leftImage->width();
+    int max_height_left = ui->label_leftImage->height();
     ui->label_leftImage->setPixmap(left_pixmap.scaled(max_width_left, max_height_left, Qt::KeepAspectRatio));
 
-    int max_width_right  = std::min(ui->label_rightImage->minimumWidth(),  right_image.width());
-    int max_height_right = std::min(ui->label_rightImage->minimumHeight(), right_image.height());
+    int max_width_right  = ui->label_rightImage->width();
+    int max_height_right = ui->label_rightImage->height();
     ui->label_rightImage->setPixmap(right_pixmap.scaled(max_width_right, max_height_right, Qt::KeepAspectRatio));
 }
-

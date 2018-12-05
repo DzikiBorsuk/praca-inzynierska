@@ -14,12 +14,194 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <layout class="QGridLayout" name="gridLayout_2">
-    <item row="0" column="0">
+   <property name="minimumSize">
+    <size>
+     <width>0</width>
+     <height>0</height>
+    </size>
+   </property>
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <property name="spacing">
+     <number>9</number>
+    </property>
+    <property name="sizeConstraint">
+     <enum>QLayout::SetDefaultConstraint</enum>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
        <number>0</number>
       </property>
+      <widget class="QWidget" name="tab_calibration">
+       <attribute name="title">
+        <string>Calibration</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <item>
+         <layout class="QGridLayout" name="gridLayout">
+          <item row="7" column="5">
+           <spacer name="horizontalSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item row="7" column="4">
+           <widget class="QPushButton" name="button_loadImages">
+            <property name="text">
+             <string>Load Images</string>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="6">
+           <widget class="QPushButton" name="button_calibrate">
+            <property name="text">
+             <string>Calibrate</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="4">
+           <widget class="QLabel" name="label_patternHeight">
+            <property name="text">
+             <string>Pattern height:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="4">
+           <widget class="QLabel" name="label_showUndistorted">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>25</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Show undistorted: </string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="5" colspan="2">
+           <widget class="QLineEdit" name="lineEdit_patternHeight">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="5">
+           <widget class="QCheckBox" name="checkBox_showUndistorted">
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="4" colspan="3">
+           <widget class="QTableWidget" name="tableWidget_imagesList">
+            <property name="minimumSize">
+             <size>
+              <width>300</width>
+              <height>0</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="5" colspan="2">
+           <widget class="QLineEdit" name="lineEdit_patternWidth">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="5">
+           <spacer name="verticalSpacer">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeType">
+             <enum>QSizePolicy::Fixed</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>25</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item row="3" column="4">
+           <widget class="QLabel" name="label_patternWidth">
+            <property name="text">
+             <string>Pattern width:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="3" rowspan="8">
+           <widget class="QLabel" name="label_CalibrationImagePreviev">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>1</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>800</width>
+              <height>600</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>ImagePreview</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="4">
+           <widget class="QLabel" name="label_avgRepError">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>25</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Average error</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="5" colspan="2">
+           <widget class="QLabel" name="label_avgRepError_value">
+            <property name="text">
+             <string>value</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tab_fetureMatching">
+       <attribute name="title">
+        <string>Feature matching</string>
+       </attribute>
+      </widget>
+      <widget class="QWidget" name="tab_rectification">
+       <attribute name="title">
+        <string>Rectification</string>
+       </attribute>
+      </widget>
       <widget class="QWidget" name="tab_disparity">
        <attribute name="title">
         <string>Disparity</string>
@@ -28,9 +210,9 @@
         <item row="0" column="1">
          <widget class="QLabel" name="label_rightImage">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>1</horstretch>
+            <verstretch>1</verstretch>
            </sizepolicy>
           </property>
           <property name="minimumSize">
@@ -47,9 +229,9 @@
         <item row="0" column="0">
          <widget class="QLabel" name="label_leftImage">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>1</horstretch>
+            <verstretch>1</verstretch>
            </sizepolicy>
           </property>
           <property name="minimumSize">
@@ -298,9 +480,9 @@
         <item row="3" column="1">
          <widget class="QLabel" name="label_disparity">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>1</horstretch>
+            <verstretch>1</verstretch>
            </sizepolicy>
           </property>
           <property name="minimumSize">
@@ -316,21 +498,13 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="tab_rectification">
-       <attribute name="title">
-        <string>Rectification</string>
-       </attribute>
-      </widget>
-      <widget class="QWidget" name="tab_calibration">
-       <attribute name="title">
-        <string>Calibration</string>
-       </attribute>
-      </widget>
-      <widget class="QWidget" name="tab_fetureMatching">
-       <attribute name="title">
-        <string>Feature matching</string>
-       </attribute>
-      </widget>
+     </widget>
+    </item>
+    <item>
+     <widget class="QLabel" name="label_status">
+      <property name="text">
+       <string>Idle</string>
+      </property>
      </widget>
     </item>
    </layout>
@@ -348,14 +522,29 @@
     <property name="title">
      <string>File</string>
     </property>
+    <widget class="QMenu" name="menuCalibration">
+     <property name="title">
+      <string>Calibration</string>
+     </property>
+     <addaction name="separator"/>
+     <addaction name="actionLoad_camera_params"/>
+     <addaction name="actionSave_camera_params"/>
+    </widget>
+    <addaction name="menuCalibration"/>
    </widget>
    <widget class="QMenu" name="menuOpitons">
     <property name="title">
      <string>Opitons</string>
     </property>
    </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuOpitons"/>
+   <addaction name="menuHelp"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <property name="enabled">
@@ -375,6 +564,27 @@
    </attribute>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+  </widget>
+  <action name="actionSave_camera_params">
+   <property name="text">
+    <string>Save camera params</string>
+   </property>
+  </action>
+  <action name="actionLoad_camera_params">
+   <property name="text">
+    <string>Load camera params</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources/>

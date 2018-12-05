@@ -42,7 +42,6 @@ Stereo::Stereo(const std::string &_left, const std::string &_right, const std::s
     left = cv::imread(_left);
     right = cv::imread(_right);
 
-    numberOfImage = imgNum::two;
 
     if (!_cameraParamsFile.empty())
     {
@@ -54,15 +53,15 @@ Stereo::Stereo(const std::string &_left, const std::string &_right, const std::s
 
 void Stereo::rectifyImage()
 {
-    rect.DSR(left, lk, right, rk);
+    //rect.DSR(left, lk, right, rk);
 
-    cv::Mat l, r;
+//    cv::Mat l, r;
 
-    cv::cvtColor(rect.getLeft(), l, CV_BGR2GRAY);
-    cv::cvtColor(rect.getRight(), r, CV_BGR2GRAY);
+//    cv::cvtColor(rect.getLeft(), l, CV_BGR2GRAY);
+//    cv::cvtColor(rect.getRight(), r, CV_BGR2GRAY);
 
-    cv::resize(l, left, {1920 / 2, 1080 / 2});
-    cv::resize(r, right, {1920 / 2, 1080 / 2});
+//    cv::resize(l, left, {1920 / 2, 1080 / 2});
+//    cv::resize(r, right, {1920 / 2, 1080 / 2});
 }
 
 void Stereo::computeDisp()
@@ -75,7 +74,7 @@ void Stereo::computeDisp()
     //cv::resize(rect.getLeft(), l, {1920, 1080});
     //cv::resize(rect.getRight(), r, {1920, 1080});
 
-    disp.SGBM(left, right);
+    //disp.SGBM(left, right);
 
 }
 
