@@ -11,6 +11,8 @@
 # generated files
 bin/
 gen/
+cmake-build-debug/
+cmake-build-release/
 
 # Local configuration file (sdk path, etc)
 local.properties
@@ -34,3 +36,6 @@ output.json
 #NDK
 obj/
 .externalNativeBuild
+
+
+praca-inzynierska\.pro\.user

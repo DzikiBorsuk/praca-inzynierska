@@ -1,0 +1,15 @@
+//
+// Created by Piotr Meller on 04.12.18.
+//
+
+#ifndef PRACA_INZYNIERSKA_STEREOCALIBRATION_H
+#define PRACA_INZYNIERSKA_STEREOCALIBRATION_H
+
+
+class StereoCalibration
+{
+
+};
+
+
+#endif //PRACA_INZYNIERSKA_STEREOCALIBRATION_H
