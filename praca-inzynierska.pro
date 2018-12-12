@@ -27,9 +27,13 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
-INCLUDEPATH += /usr/local/include
+#INCLUDEPATH += /usr/local/include
+INCLUDEPATH += $$PWD/../../openCV/3.4.4/BUILD-3.4.4/install/include
 
-LIBS += -L/usr/local/lib -lopencv_core -lopencv_imgproc -lopencv_imgcodecs -lopencv_highgui -lopencv_flann -lopencv_features2d -lopencv_calib3d -lopencv_ximgproc -lopencv_xfeatures2d
+unix:!macx: LIBS += -L/usr/local/lib -lopencv_core -lopencv_imgproc -lopencv_imgcodecs -lopencv_highgui -lopencv_flann -lopencv_features2d -lopencv_calib3d -lopencv_ximgproc -lopencv_xfeatures2d
+
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../openCV/3.4.4/BUILD-3.4.4/install/x64/vc15/lib/ -lopencv_core344 -lopencv_imgproc344 -lopencv_imgcodecs344 -lopencv_highgui344 -lopencv_flann344 -lopencv_features2d344 -lopencv_calib3d344 -lopencv_ximgproc344 -lopencv_xfeatures2d344
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../openCV/3.4.4/BUILD-3.4.4/install/x64/vc15/lib/ -lopencv_core344d -lopencv_imgproc344d -lopencv_imgcodecs344d -lopencv_highgui344d -lopencv_flann344d -lopencv_features2d344d -lopencv_calib3d344d -lopencv_ximgproc344d -lopencv_xfeatures2d344d
 
 SOURCES += \
     qtsrc/mainwindow.cpp \
