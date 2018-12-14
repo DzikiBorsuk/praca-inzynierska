@@ -54,22 +54,30 @@ Stereo::Stereo(const std::string &_left, const std::string &_right, const std::s
 void Stereo::loadLeftImage(const std::string &image_path, const std::string &camera_params_path)
 {
     left = cv::imread(image_path);
-    calib.loadParams(camera_params_path);
+    if (!camera_params_path.empty())
+    {
+        calib.loadParams(camera_params_path);
+    }
     left = calib.undistort(left);
     featureMatching.loadLeftImage(left);
+    rect.setLeftImage(left);
 }
 
 void Stereo::loadRightImage(const std::string &image_path, const std::string &camera_params_path)
 {
     right = cv::imread(image_path);
     calib.loadParams(camera_params_path);
-    right = calib.undistort(right);
+    if (!camera_params_path.empty())
+    {
+        right = calib.undistort(right);
+    }
     featureMatching.loadRightImage(right);
+    rect.setRightImage(right);
 }
 
 void Stereo::rectifyImage()
 {
-    //rect.DSR(left, lk, right, rk);
+    //rect.DirectSelfRectification(left, lk, right, rk);
 
 //    cv::Mat l, r;
 
@@ -170,7 +178,6 @@ void Stereo::match_feautures()
     //cv::waitKey(0);
     std::cout << "a" << std::endl;
 }
-
 
 const cv::Mat &Stereo::getLeft() const
 {

@@ -62,16 +62,80 @@ void FeatureMatching::loadRightImage(const cv::Mat &_right)
 
 void FeatureMatching::setDetector(int type, std::vector<double> params)
 {
-    detector = cv::xfeatures2d::SIFT::create();
+    switch (type)
+    {
+        case Detectors::SIFT:
+            detector = cv::xfeatures2d::SIFT::create(params[0], params[1], params[2], params[3], params[4]);
+            break;
+        case Detectors::SURF:
+            detector = cv::xfeatures2d::SURF::create(params[0],params[1],params[2],false,params[3]);
+            break;
+        case Detectors::ORB:
+            detector = cv::ORB::create(params[0],params[1],params[2],params[3],params[4],params[5],params[6],params[7],params[8]);
+            break;
+        case Detectors::AKAZE:
+            detector = cv::AKAZE::create(params[0],params[1],params[2],params[3],params[4],params[5],params[6]);
+            break;
+        case Detectors::KAZE:
+            detector = cv::KAZE::create(params[0],params[1],params[2],params[3],params[4],params[5]);
+            break;
+        case Detectors::BRISK:
+            detector = cv::BRISK::create(params[0],params[1],params[2]);
+            break;
+    }
 }
 void FeatureMatching::setDescriptor(int type, std::vector<double> params)
 {
-    descriptor = cv::xfeatures2d::SIFT::create();
+    switch (type)
+    {
+        case Detectors::SIFT:
+            descriptor = cv::xfeatures2d::SIFT::create(params[0], params[1], params[2], params[3], params[4]);
+            break;
+        case Detectors::SURF:
+            descriptor = cv::xfeatures2d::SURF::create(params[0],params[1],params[2],false,params[3]);
+            break;
+        case Detectors::ORB:
+            descriptor = cv::ORB::create(params[0],params[1],params[2],params[3],params[4],params[5],params[6],params[7],params[8]);
+            break;
+        case Detectors::AKAZE:
+            descriptor = cv::AKAZE::create(params[0],params[1],params[2],params[3],params[4],params[5],params[6]);
+            break;
+        case Detectors::KAZE:
+            descriptor = cv::KAZE::create(params[0],params[1],params[2],params[3],params[4],params[5]);
+            break;
+        case Detectors::BRISK:
+            descriptor = cv::BRISK::create(params[0],params[1],params[2]);
+            break;
+    }
 }
-void FeatureMatching::setMatcher(const std::string &type, std::vector<double> params)
+
+
+void FeatureMatching::setMatcher(int type, std::vector<double> params)
 {
-    matcher = cv::DescriptorMatcher::create("FlannBased");
+    matcher = cv::DescriptorMatcher::create(type);
 }
+
+unsigned long FeatureMatching::getNumOfLeftKeyPoints()
+{
+    return keypoints_left.size();
+}
+unsigned long FeatureMatching::getNumOfRightKeyPoints()
+{
+    return keypoints_right.size();
+}
+unsigned long FeatureMatching::getNumOfMatches()
+{
+    return good_matches.size();
+}
+const std::vector<cv::Point2f> &FeatureMatching::getPoints_left() const
+{
+    return points_left;
+}
+const std::vector<cv::Point2f> &FeatureMatching::getPoints_right() const
+{
+    return points_right;
+}
+
 
 void FeatureMatching::detectKeypoints()
 {
@@ -81,12 +145,23 @@ void FeatureMatching::detectKeypoints()
 
 void FeatureMatching::extractDescriptor()
 {
-    detector->compute(left, keypoints_left, descriptor_left);
-    detector->compute(right, keypoints_right, descriptor_right);
+    descriptor->compute(left, keypoints_left, descriptor_left);
+    descriptor->compute(right, keypoints_right, descriptor_right);
 }
 
 void FeatureMatching::matchKeypoints()
 {
+    matches.clear();
+    good_matches.clear();
+
+    if(descriptor_left.type()!=CV_32F) {
+        descriptor_left.convertTo(descriptor_left, CV_32F);
+    }
+
+    if(descriptor_right.type()!=CV_32F) {
+        descriptor_right.convertTo(descriptor_right, CV_32F);
+    }
+
     matcher->match(descriptor_left, descriptor_right, matches);
     double max_dist = 0;
     double min_dist = 200;
@@ -105,7 +180,6 @@ void FeatureMatching::matchKeypoints()
     //-- or a small arbitrary value ( 0.02 ) in the event that min_dist is very
     //-- small)
     //-- PS.- radiusMatch can also be used here.
-    std::vector<cv::DMatch> good_matches;
     std::vector<int> good_l;
     std::vector<int> good_r;
     for (int i = 0; i < descriptor_left.rows; i++)
@@ -128,9 +202,9 @@ void FeatureMatching::matchKeypoints()
     cv::KeyPoint::convert(keypoints_left, points_left, good_l);//Todo:  poprawic
     cv::KeyPoint::convert(keypoints_right, points_right, good_r);
 }
+
+
 const cv::Mat &FeatureMatching::getFeatures() const
 {
     return features;
 }
-
-

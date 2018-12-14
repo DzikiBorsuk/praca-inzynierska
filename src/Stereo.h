@@ -6,7 +6,6 @@
 #define PRACA_INZYNIERSKA_STEREO_H
 
 
-//#include <opencv2/opencv.hpp>
 #include <vector>
 #include <string>
 #include "Rectification.h"

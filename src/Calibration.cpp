@@ -92,11 +92,14 @@ void Calibration::findCalibrationPoints(const cv::Size &pattern_size,
         }
 
         //cv::find4QuadCornerSubpix(imagesArrayGray[i],cornersArray[i],pattern_size);
+        if(cornerFound)
+        {
         cv::cornerSubPix(imagesArrayGray[i],
                          cornersArray[i],
                          cv::Size(21, 21),
                          cv::Size(-1, -1),
                          cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::COUNT, 120, 0.01));
+        }
 
         goodImages.push_back(cornerFound);
     }
@@ -137,8 +140,21 @@ void Calibration::findCalibrationPoints(const cv::Size &pattern_size,
 
 void Calibration::calibrateCamera(int flags)
 {
-    avgError = cv::calibrateCamera(realCornersArray,
-                                   cornersArray,
+    std::vector<std::vector<cv::Point2f>> foundCorners;
+    std::vector<std::vector<cv::Point3f>> foundRealCorners;
+    foundCorners.reserve(cornersArray.size());
+    foundRealCorners.reserve(cornersArray.size());
+    for(int i=0;i<cornersArray.size();++i)
+    {
+        if(goodImages[i])
+        {
+            foundCorners.push_back(cornersArray[i]);
+            foundRealCorners.push_back(realCornersArray[i]);
+        }
+    }
+
+    avgError = cv::calibrateCamera(foundRealCorners,
+                                   foundCorners,
                                    imagesArray[0].size(),
                                    cameraMatrix,
                                    distortionCoefficient,
@@ -156,14 +172,15 @@ void Calibration::calculateReprojectionError()
     reprojectionErrorsArray.resize(imagesArray.size());
     //perViewErrors.resize(objectPoints.size());
 
+    int j=0;
 
     for (size_t i = 0; i < reprojectionErrorsArray.size(); ++i)
     {
         if (goodImages[i])
         {
             projectPoints(realCornersArray[i],
-                          rvecArray[i],
-                          tvecArray[i],
+                          rvecArray[j],
+                          tvecArray[j],
                           cameraMatrix,
                           distortionCoefficient,
                           projectionCorners);
@@ -173,6 +190,7 @@ void Calibration::calculateReprojectionError()
             reprojectionErrorsArray[i] = std::sqrt(err * err / n);
             totalErr += err * err;
             totalPoints += n;
+            j++;
         }
     }
 

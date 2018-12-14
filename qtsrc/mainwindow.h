@@ -8,11 +8,12 @@
 #include <vector>
 #include <string>
 
-namespace Ui {
+namespace Ui
+{
 class MainWindow;
 }
 
-class MainWindow : public QMainWindow
+class MainWindow: public QMainWindow
 {
     Q_OBJECT
 
@@ -20,19 +21,13 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
-private:
 
-    static void load_calibration_images(MainWindow *window, std::vector<std::string> imagesList);
+private
+    slots
+        :
 
-    static void run_calibration(MainWindow *window);
-
-    static void run_feature_matching(MainWindow *window);
-
-    static void compute_disp(MainWindow *window);
-
-private slots:
-
-    void on_button_loadImages_clicked();
+        void
+    on_button_loadImages_clicked();
 
     void on_slider_moved(int position);
 
@@ -58,11 +53,20 @@ private slots:
 
     void on_button_matchFeatures_clicked();
 
+    void on_comboBox_detector_currentIndexChanged(int index);
+
+    void on_comboBox_descriptor_currentIndexChanged(int index);
+
+    void on_comboBox_matcher_currentIndexChanged(int index);
+
+    void on_pushButton_runRectification_clicked();
+
+    void on_checkBox_showRectified_stateChanged(int arg1);
+
 private:
     Ui::MainWindow *ui;
 
     Stereo stereo;
-
 
     void resizeEvent(QResizeEvent *event) override;
 
@@ -70,28 +74,44 @@ private:
 
     bool newImages;
 
-     void init_calibration_tab();
+    void init_calibration_tab();
 
-     void load_calibration_images_init();
+    void load_calibration_images_init();
 
-     void show_calibration_image(int i, bool undistorted);
+    void show_calibration_image(int i, bool undistorted);
 
-     //########################### feature matching tab ###########################
+    static void load_calibration_images(MainWindow *window, std::vector<std::string> imagesList);
 
-     void show_matchedFeatures();
+    static void run_calibration(MainWindow *window);
+
+    //########################### feature matching tab ###########################
+
+    void show_matchedFeatures();
+
+    static void run_feature_matching(MainWindow *window);
 
 
-     //########################### disparity tab ###########################
+    //########################### rectification tab ###########################
 
-     bool compute_disparity;
-     bool is_computing_disparity;
+    void init_rectification_tab();
+
+    void show_rectified_images();
+
+    static void run_image_rectification(MainWindow *window);
+
+    //########################### disparity tab ###########################
+
+
+    static void compute_disp(MainWindow *window);
+
+    bool compute_disparity;
+    bool is_computing_disparity;
 
     void compute_disp_init();
     //void compute_disp();
     void show_disp();
 
     void init_disparity_tab();
-
 
 };
 

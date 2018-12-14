@@ -3,16 +3,54 @@
 //
 
 #define OPENCV_TRAITS_ENABLE_DEPRECATE
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
+#include <iostream>
 #include "Stereo.h"
 
+using namespace cv;
 
 int main()
 {
-    //Stereo stereo("n_left.jpg","n_right.jpg");
-    Stereo stereo("2.JPG", "3.JPG", "out_camera_data.xml");
 
-    stereo.match_feautures();
-    stereo.rectifyImage();
-    stereo.computeDisp();
+    int last_i;
+    std::cout<<"number of photo"<<std::endl;
+    std::cin >> last_i;
+
+    std::string path = "";
+    for (int i = 1; i <= last_i; i++)
+    {
+        std::string temp = "";
+        if (i < 10)
+        {
+            temp = temp + "0";
+        }
+        temp = temp + std::to_string(i);
+        std::string load = path + temp + ".JPG";
+        Mat src = imread(load);
+
+        int width = src.size().width;
+        int height = src.size().height;
+
+        Rect r_left(0, 0, width / 2, height);
+        Rect r_right(width / 2, 0, width / 2, height);
+
+
+        Mat left_ = src(r_left);
+        Mat right_ = src(r_right);
+        Mat left, right;
+        cv::resize(left_, left, { width, height });
+        cv::resize(right_, right, { width, height });
+        imwrite(path + "left/" + temp + ".png", left);
+        imwrite(path + "right/" + temp + ".png", right);
+    }
+
+
+    //Stereo stereo("n_left.jpg","n_right.jpg");
+//    Stereo stereo("2.JPG", "3.JPG", "out_camera_data.xml");
+//
+//    stereo.match_feautures();
+//    stereo.rectifyImage();
+//    stereo.computeDisp();
 
 }

@@ -25,11 +25,24 @@ private:
     cv::Mat descriptor_left, descriptor_right;
     std::vector<cv::KeyPoint> keypoints_left, keypoints_right;
     std::vector<cv::DMatch> matches;
+    std::vector<cv::DMatch> good_matches;
     std::vector<cv::Point2f> points_left, points_right;
+
 
 public:
     FeatureMatching();
     ~FeatureMatching();
+
+    enum Detectors{
+        SIFT,
+        SURF,
+        ORB,
+        AKAZE,
+        KAZE,
+        BRISK,
+
+    };
+
 
     void loadImages(const cv::Mat &_left, const cv::Mat &_right);
     void loadLeftImage(const cv::Mat &_left);
@@ -37,7 +50,13 @@ public:
 
     void setDetector(int type,std::vector<double> params);
     void setDescriptor(int type,std::vector<double> params);
-    void setMatcher(const std::string &type, std::vector<double> params);
+    void setMatcher(int type, std::vector<double> params);
+
+    unsigned long getNumOfLeftKeyPoints();
+    unsigned long getNumOfRightKeyPoints();
+    unsigned long getNumOfMatches();
+    const std::vector<cv::Point2f> &getPoints_left() const;
+    const std::vector<cv::Point2f> &getPoints_right() const;
 
     void detectKeypoints();
     void extractDescriptor();
