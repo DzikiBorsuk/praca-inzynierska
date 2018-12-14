@@ -7,11 +7,15 @@
 #include <opencv2/imgproc.hpp>
 #include <iostream>
 #include "Stereo.h"
+#include <opencv2/highgui.hpp>
 
 using namespace cv;
 
 int main()
 {
+	//Stereo stereo("n_left.jpg","n_right.jpg");
+	//Stereo stereo("2.JPG", "3.JPG", "out_camera_data.xml");
+	Stereo stereo;
 
     int last_i;
     std::cout<<"number of photo"<<std::endl;
@@ -52,5 +56,18 @@ int main()
 //    stereo.match_feautures();
 //    stereo.rectifyImage();
 //    stereo.computeDisp();
+
+	stereo.loadLeftImage("2.JPG", "out_camera_data.xml");
+	stereo.loadRightImage("1.JPG", "out_camera_data.xml");
+
+
+
+	cv::imwrite("2.png", stereo.getLeft());
+	cv::imwrite("1.png", stereo.getRight());
+
+
+	//stereo.match_feautures();
+	//stereo.rectifyImage();
+	//stereo.computeDisp();
 
 }
