@@ -1,0 +1,8 @@
+.vs/*
+Release/*
+Debug/*
+x64/*
+
+windows/Release*
+windows/Debug*
+windows/x64/*
