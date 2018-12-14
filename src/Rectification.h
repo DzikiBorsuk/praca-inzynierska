@@ -9,8 +9,13 @@
 
 class Rectification
 {
-    cv::Mat rect_left;
-    cv::Mat rect_right;
+    cv::Mat imageLeft, imageRight;
+
+    cv::Mat rectImageLeft;
+    cv::Mat rectImageRight;
+
+    std::vector<cv::Point2f> leftPoints, rightPoints;
+    std::vector<cv::Point2f> leftFilteredPoints, rightFilteredPoints;
 
     cv::Mat homLeft, homRight, homLeftCorrection, homRightCorrection;
 
@@ -22,35 +27,54 @@ public:
     Rectification();
     ~Rectification();
 
+    enum RejectionMethod
+    {
+        RANSAC,
+        LMEDS
+    };
+
+    enum RectificationMethod
+    {
+        LOOP_ZHANG,
+        HARTLEY,
+        DSR
+    };
+
+    void setLeftImage(const cv::Mat &left);
+    void setRightImage(const cv::Mat &right);
+
+    void setPoints(const std::vector<cv::Point2f> &left_points,
+                   const std::vector<cv::Point2f> &right_points);
+
+    void rejectOutliers(int method, double threshold, double confidence, int iterations);
+
+    void rectifyImages(int method);
+
+
+    void calcError(std::vector<cv::Point2f> left_points, std::vector<cv::Point2f> right_points);
+
+    const cv::Mat &getImageLeft() const;
+    const cv::Mat &getImageRight() const;
+    const cv::Mat &getRectImageLeft() const;
+    const cv::Mat &getRectImageRight() const;
+    double getMin_error() const;
+    double getMax_error() const;
+    double getAvg_error() const;
+
+private:
+
     /**
-    Opencv implementation of hartley rectification
-    */
-    void Hartley(const cv::Mat &left,
-                 std::vector<cv::Point2f> left_points,
-                 const cv::Mat &right,
-                 std::vector<cv::Point2f> right_points);
+Opencv implementation of hartley rectification
+*/
+    void Hartley();
 
     /**
     Opencv implementation of hartley rectification + anti-shearing Loop-Zhang method
     */
-    void LoopZhang(const cv::Mat &left,
-                   std::vector<cv::Point2f> left_points,
-                   const cv::Mat &right,
-                   std::vector<cv::Point2f> right_points);
+    void LoopZhang();
 
-    void DSR(const cv::Mat &left,
-             std::vector<cv::Point2f> left_points,
-             const cv::Mat &right,
-             std::vector<cv::Point2f> right_points);
-
-    cv::Mat getLeft();
-    cv::Mat getRight();
-
-    void calcError(std::vector<cv::Point2f> left_points, std::vector<cv::Point2f> right_points);
-
-
-private:
-    void warp_image(const cv::Mat &left, const cv::Mat &right);
+    void DirectSelfRectification();
+    void warp_image();
 
 };
 
