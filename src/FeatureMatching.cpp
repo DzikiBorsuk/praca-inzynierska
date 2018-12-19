@@ -40,6 +40,12 @@ void FeatureMatching::loadLeftImage(const cv::Mat &_left)
     cv::hconcat(left, right, features);
 
 }
+
+void FeatureMatching::loadMiddleImage(const cv::Mat& _middle)
+{
+
+}
+
 void FeatureMatching::loadRightImage(const cv::Mat &_right)
 {
     right = _right.clone();
@@ -112,7 +118,7 @@ void FeatureMatching::setDescriptor(int type, std::vector<double> params)
 
 void FeatureMatching::setMatcher(int type, std::vector<double> params)
 {
-    matcher = cv::DescriptorMatcher::create(type);
+	matcher = cv::DescriptorMatcher::create(1);
 }
 
 unsigned long FeatureMatching::getNumOfLeftKeyPoints()
@@ -137,19 +143,19 @@ const std::vector<cv::Point2f> &FeatureMatching::getPoints_right() const
 }
 
 
-void FeatureMatching::detectKeypoints()
+void FeatureMatching::detect2Keypoints()
 {
     detector->detect(left, keypoints_left);
     detector->detect(right, keypoints_right);
 }
 
-void FeatureMatching::extractDescriptor()
+void FeatureMatching::extract2Descriptor()
 {
     descriptor->compute(left, keypoints_left, descriptor_left);
     descriptor->compute(right, keypoints_right, descriptor_right);
 }
 
-void FeatureMatching::matchKeypoints()
+void FeatureMatching::match2Keypoints()
 {
     matches.clear();
     good_matches.clear();

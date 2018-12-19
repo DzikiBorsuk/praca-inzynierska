@@ -24,11 +24,16 @@ public:
     Disparity disp;
 
 private:
+public:
+	cv::Mat orgLeft, orgMiddle, orgRight;
     cv::Mat left, middle, right;
 public:
     const cv::Mat &getLeft() const;
+    const cv::Mat &getOrgLeft() const;
     const cv::Mat &getMiddle() const;
+    const cv::Mat &getOrgMiddle() const;
     const cv::Mat &getRight() const;
+    const cv::Mat &getOrgRight() const;
 private:
     //cv::Mat left_disp,right_disp,filtered_disp;
     //bool run_calibration;
@@ -45,7 +50,8 @@ public:
     void loadLeftImage(const std::string &image_path, const std::string &camera_params_path = "");
     void loadRightImage(const std::string &image_path, const std::string &camera_params_path = "");
 
-    void rectifyImage();
+    void rectify2Image();
+    void rectify3Image();
 
     void computeDisp();
 

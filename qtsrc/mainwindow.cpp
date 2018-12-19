@@ -37,6 +37,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->comboBox_matcher->addItems(matchersList);
 
 
+
     ui->slider_minDisparity->setRange(-320, 320);
     ui->slider_minDisparity->setValue(-32);
     ui->slider_maxDisparity->setRange(-320, 320);
@@ -57,7 +58,7 @@ MainWindow::MainWindow(QWidget *parent)
     while (i.hasNext())
     {
         QSlider *slider;
-        if (slider = qobject_cast<QSlider *>(i.next()))
+        if ((slider = qobject_cast<QSlider *>(i.next())))
         {
             connect(slider, SIGNAL(valueChanged(int)), this, SLOT(on_slider_moved(int)));
             //a++;
@@ -156,7 +157,7 @@ void MainWindow::on_button_loadImages_clicked()
     QStringList filenames = QFileDialog::getOpenFileNames(this,
                                                           tr("Image calibration list"),
                                                           QDir::currentPath(),
-                                                          tr("PNG files (*.png);;JPEG files (.jpeg *.jpg *.JPG *.jpe);;Bitmap files (*.bmp *.dib);;All files (*.*)"));
+                                                          tr("PNG files (*.png);;JPEG files (*.jpeg *.jpg *.JPG *.jpe);;Bitmap files (*.bmp *.dib);;All files (*.*)"));
     if (!filenames.isEmpty())
     {
         std::vector<std::string> imagesList;
@@ -461,9 +462,9 @@ void MainWindow::run_feature_matching(MainWindow *window)
     QElapsedTimer timer;
     timer.start();
 
-    window->stereo.featureMatching.detectKeypoints();
-    window->stereo.featureMatching.extractDescriptor();
-    window->stereo.featureMatching.matchKeypoints();
+    window->stereo.featureMatching.detect2Keypoints();
+    window->stereo.featureMatching.extract2Descriptor();
+    window->stereo.featureMatching.match2Keypoints();
 
     auto elapsed = timer.elapsed() / 1000.0;
 
@@ -553,8 +554,8 @@ void MainWindow::show_rectified_images()
     }
     else
     {
-        leftSrc = this->stereo.rect.getImageLeft();
-        rightSrc = this->stereo.rect.getImageRight();
+        leftSrc = this->stereo.rect.getRectImageLeft();
+        rightSrc = this->stereo.rect.getRectImageRight();
     }
 
 
@@ -596,7 +597,10 @@ void MainWindow::run_image_rectification(MainWindow *window)
     timer.start();
 
     window->stereo.rect.rejectOutliers(rejectionMethod,threshold,confidence,iterations);
-    window->stereo.rect.rectifyImages(rectificationMethod);
+    window->stereo.rect.rectifyImages(rectificationMethod,window->stereo.getOrgLeft(),
+                                      window->stereo.calib.getCameraMatrix(), window->stereo.calib.getDistortionCoefficient(),
+                                      window->stereo.getOrgRight(),
+                                      window->stereo.calib.getCameraMatrix(), window->stereo.calib.getDistortionCoefficient());
 
     auto elapsed = timer.elapsed() / 1000.0;
 
@@ -793,7 +797,7 @@ void MainWindow::init_disparity_tab()
     {
         a = false;
         stereo.match_feautures();
-        stereo.rectifyImage();
+        //stereo.rectifyImage();
         stereo.disp.initSGBM();
         stereo.computeDisp();
     }
@@ -816,8 +820,8 @@ void MainWindow::init_disparity_tab()
     ui->label_disparity->setPixmap(disparity_pixmap.scaled(max_width, max_height, Qt::KeepAspectRatio));
 
 
-    cv::Mat left_bgr = stereo.rect.getImageLeft();
-    cv::Mat right_bgr = stereo.rect.getImageRight();
+    cv::Mat left_bgr = stereo.rect.getRectImageLeft();
+    cv::Mat right_bgr = stereo.rect.getRectImageRight();
 
     cv::Mat left, right;
     cv::cvtColor(left_bgr, left, CV_BGR2RGB);

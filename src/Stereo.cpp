@@ -53,39 +53,36 @@ Stereo::Stereo(const std::string &_left, const std::string &_right, const std::s
 
 void Stereo::loadLeftImage(const std::string &image_path, const std::string &camera_params_path)
 {
-    left = cv::imread(image_path);
+    orgLeft = cv::imread(image_path);
     if (!camera_params_path.empty())
     {
         calib.loadParams(camera_params_path);
     }
-    left = calib.undistort(left);
+    left = calib.undistort(orgLeft);
     featureMatching.loadLeftImage(left);
-    rect.setLeftImage(left);
+    //rect.setLeftImage(left);
 }
 
 void Stereo::loadRightImage(const std::string &image_path, const std::string &camera_params_path)
 {
-    right = cv::imread(image_path);
+    orgRight = cv::imread(image_path);
     calib.loadParams(camera_params_path);
     if (!camera_params_path.empty())
     {
-        right = calib.undistort(right);
+        right = calib.undistort(orgRight);
     }
     featureMatching.loadRightImage(right);
-    rect.setRightImage(right);
+   // rect.setRightImage(right);
 }
 
-void Stereo::rectifyImage()
+void Stereo::rectify2Image()
 {
-    //rect.DirectSelfRectification(left, lk, right, rk);
 
-//    cv::Mat l, r;
+}
 
-//    cv::cvtColor(rect.getLeft(), l, CV_BGR2GRAY);
-//    cv::cvtColor(rect.getRight(), r, CV_BGR2GRAY);
-
-//    cv::resize(l, left, {1920 / 2, 1080 / 2});
-//    cv::resize(r, right, {1920 / 2, 1080 / 2});
+void Stereo::rectify3Image()
+{
+	//TODO implementation
 }
 
 void Stereo::computeDisp()
@@ -183,13 +180,24 @@ const cv::Mat &Stereo::getLeft() const
 {
     return left;
 }
+const cv::Mat &Stereo::getOrgLeft() const
+{
+	return orgLeft;
+}
 const cv::Mat &Stereo::getMiddle() const
 {
     return middle;
+}
+const cv::Mat &Stereo::getOrgMiddle() const
+{
+	return orgMiddle;
 }
 const cv::Mat &Stereo::getRight() const
 {
     return right;
 }
-
+const cv::Mat &Stereo::getOrgRight() const
+{
+	return orgRight;
+}
 
