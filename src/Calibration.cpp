@@ -6,6 +6,24 @@
 #include <opencv2/ccalib.hpp>
 #include <opencv2/highgui.hpp>
 
+Calibration::Calibration()
+{
+	cv::FileStorage fs;
+    fs.open("deafault_camera_params.xml", cv::FileStorage::READ);
+    if (!fs.isOpened())
+	{
+        fs.open("deafault_camera_params.yml", cv::FileStorage::READ);
+        if (!fs.isOpened())
+		{
+			return;
+		}
+	}
+
+	fs["camera_matrix"] >> cameraMatrix;
+	fs["distortion_coefficients"] >> distortionCoefficient;
+	fs.release();
+}
+
 Calibration::Calibration(std::string filename)
 {
     loadParams(filename);
@@ -232,8 +250,15 @@ void Calibration::drawPattern()
 cv::Mat Calibration::undistort(const cv::Mat &img)
 {
     cv::Mat undistort;
-    cv::undistort(img, undistort, cameraMatrix, distortionCoefficient);
-    return undistort;
+	if (!cameraMatrix.empty() && !distortionCoefficient.empty())
+	{
+		cv::undistort(img, undistort, cameraMatrix, distortionCoefficient);
+		return undistort;
+	}
+	else
+	{
+		return cv::Mat();
+	}
 }
 
 const std::vector<cv::Mat> &Calibration::getImagesArray() const

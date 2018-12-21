@@ -59,6 +59,10 @@ void Stereo::loadLeftImage(const std::string &image_path, const std::string &cam
         calib.loadParams(camera_params_path);
     }
     left = calib.undistort(orgLeft);
+    if (left.empty())
+	{
+		left = orgLeft;
+	}
     featureMatching.loadLeftImage(left);
     //rect.setLeftImage(left);
 }
@@ -66,13 +70,17 @@ void Stereo::loadLeftImage(const std::string &image_path, const std::string &cam
 void Stereo::loadRightImage(const std::string &image_path, const std::string &camera_params_path)
 {
     orgRight = cv::imread(image_path);
-    calib.loadParams(camera_params_path);
     if (!camera_params_path.empty())
     {
-        right = calib.undistort(orgRight);
+        calib.loadParams(camera_params_path);
     }
+    right = calib.undistort(orgRight);
+    if (right.empty())
+	{
+		right = orgRight;
+	}
     featureMatching.loadRightImage(right);
-   // rect.setRightImage(right);
+
 }
 
 void Stereo::rectify2Image()

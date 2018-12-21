@@ -15,59 +15,118 @@ int main()
 {
 	//Stereo stereo("n_left.jpg","n_right.jpg");
 	//Stereo stereo("2.JPG", "3.JPG", "out_camera_data.xml");
+
+	// int last_i;
+	// std::cout<<"number of photo"<<std::endl;
+	// std::cin >> last_i;
+	//
+	// std::string path = "";
+	// for (int i = 1; i <= last_i; i++)
+	// {
+	//     std::string temp = "";
+	//     if (i < 10)
+	//     {
+	//         temp = temp + "0";
+	//     }
+	//     temp = temp + std::to_string(i);
+	//     std::string load = path + temp + ".JPG";
+	//     Mat src = imread(load);
+	//
+	//     int width = src.size().width;
+	//     int height = src.size().height;
+	//
+	//     Rect r_left(0, 0, width / 2, height);
+	//     Rect r_right(width / 2, 0, width / 2, height);
+	//
+	//
+	//     Mat left_ = src(r_left);
+	//     Mat right_ = src(r_right);
+	//     Mat left, right;
+	//     cv::resize(left_, left, { width, height });
+	//     cv::resize(right_, right, { width, height });
+	//     imwrite(path + "left/" + temp + ".png", left);
+	//     imwrite(path + "right/" + temp + ".png", right);
+	// }
+
+
+	//Stereo stereo("n_left.jpg","n_right.jpg");
+	//    Stereo stereo("2.JPG", "3.JPG", "out_camera_data.xml");
+	//
+	//    stereo.match_feautures();
+	//    stereo.rectifyImage();
+	//    stereo.computeDisp();
+
 	Stereo stereo;
 
-    int last_i;
-    std::cout<<"number of photo"<<std::endl;
-    std::cin >> last_i;
+	stereo.loadLeftImage("s.JPG", "out_camera_data.xml");
+	stereo.loadRightImage("r.JPG", "out_camera_data.xml");
 
-    std::string path = "";
-    for (int i = 1; i <= last_i; i++)
-    {
-        std::string temp = "";
-        if (i < 10)
-        {
-            temp = temp + "0";
-        }
-        temp = temp + std::to_string(i);
-        std::string load = path + temp + ".JPG";
-        Mat src = imread(load);
+	stereo.featureMatching.setDetector(FeatureMatching::Detectors::SURF, {1000, 4, 3, 0});
+	stereo.featureMatching.setDescriptor(FeatureMatching::Detectors::SURF, {1000, 4, 3, 0});
+	stereo.featureMatching.setMatcher(0, std::vector<double>());
+	stereo.featureMatching.detect2Keypoints();
+	stereo.featureMatching.extract2Descriptor();
 
-        int width = src.size().width;
-        int height = src.size().height;
+	stereo.featureMatching.match2Keypoints();
 
-        Rect r_left(0, 0, width / 2, height);
-        Rect r_right(width / 2, 0, width / 2, height);
+	stereo.rect.setPoints(stereo.featureMatching.getPoints_left(), stereo.featureMatching.getPoints_right());
+	//stereo.rect.setCameraMatrix(stereo.calib.getCameraMatrix());
+
+	stereo.rect.rejectOutliers(Rectification::RejectionMethod::RANSAC, 3, 0.99, 2000);
+	//stereo.rect.rectifyImages(Rectification::RectificationMethod::DSR);
+	//stereo.rect.estimatePose();
+	//stereo.rect.rectifyImages(Rectification::RectificationMethod::POSE_ESTIMATION);
+
+	stereo.rect.rectifyImages(Rectification::RectificationMethod::POSE_ESTIMATION, stereo.getOrgLeft(),
+	                          stereo.calib.getCameraMatrix(), stereo.calib.getDistortionCoefficient(),
+	                          stereo.getOrgRight(),
+	                          stereo.calib.getCameraMatrix(), stereo.calib.getDistortionCoefficient());
+
+	// cv::Mat R1,R2,P1,P2,Q;
+	//
+	// stereo.calib.getCameraMatrix();
+	//
+	// cv::stereoRectify(stereo.calib.getCameraMatrix(), stereo.calib.getDistortionCoefficient(),
+	//                   stereo.calib.getCameraMatrix(), stereo.calib.getDistortionCoefficient(), stereo.orgLeft.size(),
+	//                   stereo.rect.relativeRotation, stereo.rect.relativeTranslation,R1,R2,P1,P2,Q);
+	//
+	// Mat rmap[2][2];
+	//
+	// cv::Mat F = cv::findFundamentalMat(stereo.rect.leftFilteredPoints, stereo.rect.rightFilteredPoints,cv::FM_8POINT);
+	//
+	// cv::Mat H1, H2;
+	//
+	// cv::stereoRectifyUncalibrated(stereo.rect.leftFilteredPoints, stereo.rect.rightFilteredPoints, F, stereo.orgLeft.size(), H1, H2);
+	//
+	// //stereo.rect.warp_image();
+	//
+	// H1 = stereo.rect.homLeftCorrection;
+	// H2 = stereo.rect.homRightCorrection;
+	//
+	// R1 = stereo.calib.getCameraMatrix().inv()*H1*stereo.calib.getCameraMatrix();
+	// R2 = stereo.calib.getCameraMatrix().inv()*H2*stereo.calib.getCameraMatrix();
+	// P1 = stereo.calib.getCameraMatrix();
+	// P2 = stereo.calib.getCameraMatrix();
+	//
+	//
+	// cv::initUndistortRectifyMap(stereo.calib.getCameraMatrix(), stereo.calib.getDistortionCoefficient(), R1, P1, stereo.rect.newSize, CV_16SC2, rmap[0][0], rmap[0][1]);
+	// cv::initUndistortRectifyMap(stereo.calib.getCameraMatrix(), stereo.calib.getDistortionCoefficient(), R2, P2, stereo.rect.newSize, CV_16SC2, rmap[1][0], rmap[1][1]);
+	//
+	//
+	//
+	// cv::Mat l, r;
+	//
+	// remap(stereo.orgLeft, l, rmap[0][0], rmap[0][1], INTER_LINEAR);
+	// remap(stereo.orgRight, r, rmap[1][0], rmap[1][1], INTER_LINEAR);
+
+	//stereo.rect.warp_image();
 
 
-        Mat left_ = src(r_left);
-        Mat right_ = src(r_right);
-        Mat left, right;
-        cv::resize(left_, left, { width, height });
-        cv::resize(right_, right, { width, height });
-        imwrite(path + "left/" + temp + ".png", left);
-        imwrite(path + "right/" + temp + ".png", right);
-    }
-
-
-    //Stereo stereo("n_left.jpg","n_right.jpg");
-//    Stereo stereo("2.JPG", "3.JPG", "out_camera_data.xml");
-//
-//    stereo.match_feautures();
-//    stereo.rectifyImage();
-//    stereo.computeDisp();
-
-	stereo.loadLeftImage("2.JPG", "out_camera_data.xml");
-	stereo.loadRightImage("1.JPG", "out_camera_data.xml");
-
-
-
-	cv::imwrite("2.png", stereo.getLeft());
-	cv::imwrite("1.png", stereo.getRight());
+	cv::imwrite("2r.png", stereo.rect.getRectImageLeft());
+	cv::imwrite("1r.png", stereo.rect.getRectImageRight());
 
 
 	//stereo.match_feautures();
 	//stereo.rectifyImage();
 	//stereo.computeDisp();
-
 }

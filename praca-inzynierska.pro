@@ -46,6 +46,7 @@ SOURCES += \
 
 HEADERS += \
     qtsrc/mainwindow.h \
+    qtsrc/expensivecomputingworker.h \
     src/Calibration.h \
     src/Disparity.h \
     src/FeatureMatching.h \

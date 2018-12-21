@@ -40,7 +40,7 @@ public:
 
     };
 
-    Calibration() = default;
+    Calibration();
     Calibration(std::string filename);
     ~Calibration();
 
