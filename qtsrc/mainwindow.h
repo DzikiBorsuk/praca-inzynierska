@@ -3,7 +3,9 @@
 
 #include <QMainWindow>
 #include <QSqlTableModel>
+#include <QThread>
 #include "../src/Stereo.h"
+#include "expensivecomputingworker.h"
 
 #include <vector>
 #include <string>
@@ -22,12 +24,9 @@ public:
     ~MainWindow();
 
 
-private
-    slots
-        :
+private slots:
 
-        void
-    on_button_loadImages_clicked();
+    void on_button_loadImages_clicked();
 
     void on_slider_moved(int position);
 
@@ -63,10 +62,29 @@ private
 
     void on_checkBox_showRectified_stateChanged(int arg1);
 
+
+     //########################### calibration tab ###########################
+
+    void load_calibration_images_finished(const QString& msg);
+
+    void calibration_finished(const QString& msg);
+
+    //########################### feature matching tab ###########################
+
+    void feature_matching_finished(const QString& msg);
+
+    //########################### rectification tab ###########################
+
+    void image_rectification_finished(const QString& msg);
+
 private:
     Ui::MainWindow *ui;
 
     Stereo stereo;
+
+    expensiveComputingWorker *worker;
+
+    QThread *computingThread;
 
     void resizeEvent(QResizeEvent *event) override;
 
@@ -80,15 +98,11 @@ private:
 
     void show_calibration_image(int i, bool undistorted);
 
-    static void load_calibration_images(MainWindow *window, std::vector<std::string> imagesList);
-
-    static void run_calibration(MainWindow *window);
-
     //########################### feature matching tab ###########################
 
-    void show_matchedFeatures();
+    void init_feature_matching_tab();
 
-    static void run_feature_matching(MainWindow *window);
+    void show_matchedFeatures();
 
 
     //########################### rectification tab ###########################
@@ -96,8 +110,6 @@ private:
     void init_rectification_tab();
 
     void show_rectified_images();
-
-    static void run_image_rectification(MainWindow *window);
 
     //########################### disparity tab ###########################
 

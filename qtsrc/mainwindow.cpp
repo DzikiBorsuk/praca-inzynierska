@@ -14,27 +14,18 @@
 MainWindow::MainWindow(QWidget *parent)
     :
     QMainWindow(parent),
-    ui(new Ui::MainWindow), newImages(false), compute_disparity(false), is_computing_disparity(false)
+    ui(new Ui::MainWindow), worker(new expensiveComputingWorker()), computingThread(new QThread()), newImages(false), compute_disparity(false), is_computing_disparity(false)
 {
 
 
     ui->setupUi(this);
 
+    qRegisterMetaType<Stereo*>("Stereo*");
+    qRegisterMetaType<std::vector<std::string>>("std::vector<std::string>");
 
-    ui->label_CalibrationImagePreviev->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
-    ui->label_matchedFeatures->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
-    ui->label_disparity->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+    worker->moveToThread(this->computingThread);
+    computingThread->start();
 
-
-    QStringList detectorsList = (QStringList() << "SIFT" << "SURF" << "ORB" << "AKAZE" << "KAZE" << "BRISK");
-    ui->comboBox_detector->addItems(detectorsList);
-
-    QStringList descriptorsList = (QStringList() << "SIFT" << "SURF" << "ORB" << "AKAZE" << "KAZE" << "BRISK");
-    ui->comboBox_descriptor->addItems(descriptorsList);
-
-    QStringList matchersList = (QStringList() << "FlannBased" << "BruteForce" << "BrueForce-L1" << "BruteForce-Hamming"
-                                              << "BruteForce-Hamming(2)");
-    ui->comboBox_matcher->addItems(matchersList);
 
 
 
@@ -67,6 +58,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 
     init_calibration_tab();
+    init_feature_matching_tab();
     init_rectification_tab();
 
 }
@@ -74,6 +66,17 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete ui;
+    computingThread->exit();
+
+    if(!computingThread->wait(5000)) //Wait until it actually has terminated (max. 5 sec)
+    {
+    qWarning("Thread deadlock detected, bad things may happen !!!");
+    computingThread->terminate(); //Thread didn't exit in time, probably deadlocked, terminate it!
+    computingThread->wait(); //Note: We have to wait again here!
+    }
+    delete computingThread;
+    delete worker;
+
 }
 
 void MainWindow::resizeEvent(QResizeEvent *event)
@@ -92,30 +95,36 @@ void MainWindow::on_actionLeft_image_triggered()
 {
     QString imageFile = QFileDialog::getOpenFileName(this,
                                                      tr("Load left image"), "",
-                                                     tr("PNG files (*.png);;JPEG files (.jpeg *.jpg *.JPG *.jpe);;Bitmap files (*.bmp *.dib);;All files (*.*)"));
+                                                     tr("Image files (*.png *.PNG *.jpeg *.jpg *.JPG *.jpe *.bmp *.dib);;All files (*.*)"));
 
-    QString cameraParamsFile = QFileDialog::getOpenFileName(this,
-                                                            tr("Load left camera params"), "",
-                                                            tr("opencv XML/YAML files (*.xml *.yml);;All Files (*)"));
+    //QString cameraParamsFile = QFileDialog::getOpenFileName(this,
+    //                                                        tr("Load left camera params"), "",
+    //                                                        tr("opencv XML/YAML files (*.xml *.yml);;All Files (*)"));
 
-    this->stereo.loadLeftImage(imageFile.toUtf8().constData(), cameraParamsFile.toUtf8().constData());
-    this->show_matchedFeatures();
-    this->show_rectified_images();
+    if(!imageFile.isEmpty())
+    {
+        this->stereo.loadLeftImage(imageFile.toUtf8().constData());
+        this->show_matchedFeatures();
+        this->show_rectified_images();
+    }
 }
 
 void MainWindow::on_actionRight_image_triggered()
 {
     QString imageFile = QFileDialog::getOpenFileName(this,
                                                      tr("Load right image"), "",
-                                                     tr("PNG files (*.png);;JPEG files (.jpeg *.jpg *.JPG *.jpe);;Bitmap files (*.bmp *.dib);;All files (*.*)"));
+                                                     tr("Image files (*.png *.PNG *.jpeg *.jpg *.JPG *.jpe *.bmp *.dib);;All files (*.*)"));
 
-    QString cameraParamsFile = QFileDialog::getOpenFileName(this,
-                                                            tr("Load right camera params"), "",
-                                                            tr("opencv XML/YAML files (*.xml *.yml);;All Files (*)"));
+    //QString cameraParamsFile = QFileDialog::getOpenFileName(this,
+    //                                                        tr("Load right camera params"), "",
+    //                                                        tr("opencv XML/YAML files (*.xml *.yml);;All Files (*)"));
 
-    this->stereo.loadRightImage(imageFile.toUtf8().constData(), cameraParamsFile.toUtf8().constData());
-    this->show_matchedFeatures();
-    this->show_rectified_images();
+    if(!imageFile.isEmpty())
+    {
+        this->stereo.loadRightImage(imageFile.toUtf8().constData());
+        this->show_matchedFeatures();
+        this->show_rectified_images();
+    }
 }
 
 //###################################################### calibration tab ######################################################
@@ -132,6 +141,11 @@ void MainWindow::init_calibration_tab()
     ui->tableWidget_imagesList->setHorizontalHeaderLabels(header);
     ui->tableWidget_imagesList->horizontalHeader()->setStretchLastSection(true);
     ui->tableWidget_imagesList->verticalHeader()->setVisible(false);
+
+    ui->label_CalibrationImagePreviev->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+
+    QObject::connect(worker, SIGNAL(finish_loadImageList(const QString&)), this, SLOT(load_calibration_images_finished(const QString&)));
+    QObject::connect(worker, SIGNAL(finish_runCalibration(const QString&)), this, SLOT(calibration_finished(const QString&)));
 }
 
 void MainWindow::on_actionLoad_camera_params_triggered()
@@ -169,8 +183,9 @@ void MainWindow::on_button_loadImages_clicked()
 
         //ui->tableWidget_imagesList->clear();
         ui->tableWidget_imagesList->setRowCount(0);
-        std::thread thread(load_calibration_images, this, imagesList);
-        thread.detach();
+        //std::thread thread(load_calibration_images, this, imagesList);
+
+        QMetaObject::invokeMethod( worker, "loadImagesList",Q_ARG(Stereo*, &stereo) ,Q_ARG( std::vector<std::string>, imagesList));
 
         newImages = true;
 
@@ -182,8 +197,12 @@ void MainWindow::on_button_loadImages_clicked()
 
 void MainWindow::on_button_calibrate_clicked()
 {
-    std::thread thread(run_calibration, this);
-    thread.detach();
+    //TODO: sprawdzić poprawność width i height
+    int width = this->ui->lineEdit_patternWidth->text().toInt();
+    int height = this->ui->lineEdit_patternHeight->text().toInt();
+
+    QMetaObject::invokeMethod( worker, "runCalibration",Q_ARG(Stereo*, &stereo) ,Q_ARG( int, width), Q_ARG(int, height));
+
     ui->button_loadImages->setEnabled(false);
     ui->button_calibrate->setEnabled(false);
     ui->label_status->setText("Calibrating");
@@ -208,64 +227,44 @@ void MainWindow::on_checkBox_showUndistorted_stateChanged(int arg1)
     show_calibration_image(row, ui->checkBox_showUndistorted->isChecked());
 }
 
-void MainWindow::load_calibration_images(MainWindow *window, std::vector<std::string> imagesList)
+void MainWindow::load_calibration_images_finished(const QString& msg)
 {
-    QElapsedTimer timer;
-    timer.start();
 
-    window->stereo.calib.loadImagesList(imagesList);
+    this->ui->button_loadImages->setEnabled(true);
+    this->ui->button_calibrate->setEnabled(true);
+    this->ui->label_status->setText(msg);
 
-    auto elapsed = timer.elapsed() / 1000.0;
-
-    window->ui->button_loadImages->setEnabled(true);
-    window->ui->button_calibrate->setEnabled(true);
-    window->ui->label_status->setText("Images Loaded successfully. Time: " + QString::number(elapsed) + "s");
-
-    window->show_calibration_image(0, false);
+    this->show_calibration_image(0, false);
 }
 
-void MainWindow::run_calibration(MainWindow *window)
+void MainWindow::calibration_finished(const QString& msg)
 {
-    //TODO: sprawdzić poprawność width i height
-    int width = window->ui->lineEdit_patternWidth->text().toInt();
-    int height = window->ui->lineEdit_patternHeight->text().toInt();
 
-    QElapsedTimer timer;
-    timer.start();
-
-    window->stereo.calib.findCalibrationPoints({width, height});
-    window->stereo.calib.calibrateCamera();
-    window->stereo.calib.calculateReprojectionError();
-    window->stereo.calib.undistortCalibrationImages();
-    //window->stereo.calib.drawPattern();
-
-    auto elapsed = timer.elapsed() / 1000.0;
-
-    double error = window->stereo.calib.getAvgError2();
-    auto goodImages = window->stereo.calib.getGoodImages();
-    auto reprojectionErrors = window->stereo.calib.getReprojectionErrorsArray();
-    window->ui->tableWidget_imagesList->setRowCount(goodImages.size());
+    double error = this->stereo.calib.getAvgError2();
+    auto goodImages = this->stereo.calib.getGoodImages();
+    auto reprojectionErrors = this->stereo.calib.getReprojectionErrorsArray();
+    this->ui->tableWidget_imagesList->setRowCount(goodImages.size());
 
     for (int i = 0; i < goodImages.size(); ++i)
     {
-        window->ui->tableWidget_imagesList->setItem(i, 0, new QTableWidgetItem(QString::number(i)));
+        this->ui->tableWidget_imagesList->setItem(i, 0, new QTableWidgetItem(QString::number(i)));
         if (goodImages[i])
         {
-            window->ui->tableWidget_imagesList
+            this->ui->tableWidget_imagesList
                 ->setItem(i, 1, new QTableWidgetItem(QString::number(reprojectionErrors[i])));
         }
         else
         {
-            window->ui->tableWidget_imagesList->setItem(i, 1, new QTableWidgetItem("not found"));
+            this->ui->tableWidget_imagesList->setItem(i, 1, new QTableWidgetItem("not found"));
         }
     }
-    window->ui->tableWidget_imagesList->sortItems(1);
-    window->ui->label_avgRepError_value->setText(QString::number(error));
+    this->ui->tableWidget_imagesList->sortItems(1);
+    this->ui->label_avgRepError_value->setText(QString::number(error));
 
 
-    window->ui->button_loadImages->setEnabled(true);
-    window->ui->button_calibrate->setEnabled(true);
-    window->ui->label_status->setText("Calibration finished Time: " + QString::number(elapsed) + "s");
+    this->ui->button_loadImages->setEnabled(true);
+    this->ui->button_calibrate->setEnabled(true);
+    this->ui->label_status->setText(msg);
 }
 
 void MainWindow::show_calibration_image(int i, bool undistorted)
@@ -323,6 +322,25 @@ void MainWindow::show_calibration_image(int i, bool undistorted)
 
 //###################################################### feature matching tab ######################################################
 
+
+void MainWindow::init_feature_matching_tab()
+{
+    QObject::connect(worker, SIGNAL(finish_featureMatching(const QString&)), this, SLOT(feature_matching_finished(const QString&)));
+
+    QStringList detectorsList = (QStringList() << "SIFT" << "SURF" << "ORB" << "AKAZE" << "KAZE" << "BRISK");
+    ui->comboBox_detector->addItems(detectorsList);
+
+    QStringList descriptorsList = (QStringList() << "SIFT" << "SURF" << "ORB" << "AKAZE" << "KAZE" << "BRISK");
+    ui->comboBox_descriptor->addItems(descriptorsList);
+
+    QStringList matchersList = (QStringList() << "FlannBased" << "BruteForce" << "BrueForce-L1" << "BruteForce-Hamming"
+                                              << "BruteForce-Hamming(2)");
+    ui->comboBox_matcher->addItems(matchersList);
+
+
+    ui->label_matchedFeatures->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+
+}
 
 void MainWindow::on_comboBox_detector_currentIndexChanged(int index)
 {
@@ -453,33 +471,23 @@ void MainWindow::on_button_matchFeatures_clicked()
 {
     this->ui->label_status->setText("Matching");
 
-    std::thread thread(run_feature_matching, this);
-    thread.detach();
+    QMetaObject::invokeMethod( worker, "runFeatureMatching",Q_ARG(Stereo*, &stereo));
 }
 
-void MainWindow::run_feature_matching(MainWindow *window)
+
+void MainWindow::feature_matching_finished(const QString& msg)
 {
-    QElapsedTimer timer;
-    timer.start();
+    this->stereo.rect.setPoints(this->stereo.featureMatching.getPoints_left(),this->stereo.featureMatching.getPoints_right());
 
-    window->stereo.featureMatching.detect2Keypoints();
-    window->stereo.featureMatching.extract2Descriptor();
-    window->stereo.featureMatching.match2Keypoints();
+    auto leftKeypoints = QString::number(this->stereo.featureMatching.getNumOfLeftKeyPoints());
+    auto rightKeypoints = QString::number(this->stereo.featureMatching.getNumOfRightKeyPoints());
+    auto matches = QString::number(this->stereo.featureMatching.getNumOfMatches());
 
-    auto elapsed = timer.elapsed() / 1000.0;
+    this->ui->label_status->setText(msg+"   Left keypoints: "+leftKeypoints+"   Right keypoints: "+rightKeypoints+"     Matches: "+matches);
 
-    window->stereo.rect.setPoints(window->stereo.featureMatching.getPoints_left(),window->stereo.featureMatching.getPoints_right());
-
-    auto leftKeypoints = QString::number(window->stereo.featureMatching.getNumOfLeftKeyPoints());
-    auto rightKeypoints = QString::number(window->stereo.featureMatching.getNumOfRightKeyPoints());
-    auto matches = QString::number(window->stereo.featureMatching.getNumOfMatches());
-
-    window->ui->label_status->setText(
-        "Matching finished. Time: " + QString::number(elapsed) + "s    Left keypoints: " + leftKeypoints
-            + "    Right keypoints: " + rightKeypoints + "    Matches: " + matches);
-
-    window->show_matchedFeatures();
+    this->show_matchedFeatures();
 }
+
 
 void MainWindow::show_matchedFeatures()
 {
@@ -514,7 +522,7 @@ void MainWindow::init_rectification_tab()
     ui->label_rectificationLeftImage->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
     ui->label_rectificationRightImage->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
 
-    QStringList rectificationMethods = (QStringList() << "Loop-Zhang" << "Hartley" << "DSR");
+    QStringList rectificationMethods = (QStringList() << "Loop-Zhang" << "Hartley" << "DSR"<<"Pose estimation");
     ui->comboBox_rectificationMethod->addItems(rectificationMethods);
 
     QStringList rejectionMethods = (QStringList() << "RANSAC" << "LMEDS" << "RHO" << "None");
@@ -524,6 +532,9 @@ void MainWindow::init_rectification_tab()
     ui->lineEdit_rectificationRejectionConfidence->setText("0.995");
     ui->lineEdit_rectificationIterations->setText("2000");
 
+    QObject::connect(worker, SIGNAL(finish_imageRectification(const QString&)), this, SLOT(image_rectification_finished(const QString&)));
+
+
 }
 
 void MainWindow::on_pushButton_runRectification_clicked()
@@ -531,9 +542,16 @@ void MainWindow::on_pushButton_runRectification_clicked()
     ui->pushButton_runRectification->setDisabled(true);
     ui->label_status->setText("Rectification in progress.");
 
-    std::thread thread(run_image_rectification,this);
-    thread.detach();
+    //std::thread thread(run_image_rectification,this);
+    //thread.detach();
 
+    int rejectionMethod = this->ui->comboBox_rectificationRejectionMethod->currentIndex();
+    double threshold = this->ui->lineEdit_rectificationRejectionThreshold->text().toDouble();
+    double confidence = this->ui->lineEdit_rectificationRejectionConfidence->text().toDouble();
+    int iterations = this->ui->lineEdit_rectificationIterations->text().toInt();
+    int rectificationMethod = this->ui->comboBox_rectificationMethod->currentIndex();
+
+    QMetaObject::invokeMethod( worker, "runImageRectification",Q_ARG(Stereo*, &stereo),Q_ARG(int, rectificationMethod),Q_ARG(int, rejectionMethod),Q_ARG(double, threshold),Q_ARG(double,confidence),Q_ARG(int,iterations));
 }
 
 void MainWindow::on_checkBox_showRectified_stateChanged(int arg1)
@@ -581,36 +599,19 @@ void MainWindow::show_rectified_images()
     int max_right_height = ui->label_rectificationRightImage->height();
 
     ui->label_rectificationLeftImage->setPixmap(left_pixmap.scaled(max_left_width, max_left_height, Qt::KeepAspectRatio));
-    ui->label_rectificationRightImage->setPixmap(right_pixmap.scaled(max_right_width, max_left_height, Qt::KeepAspectRatio));
+    ui->label_rectificationRightImage->setPixmap(right_pixmap.scaled(max_left_width, max_left_height, Qt::KeepAspectRatio));
 
 }
 
-void MainWindow::run_image_rectification(MainWindow *window)
+void MainWindow::image_rectification_finished(const QString &msg)
 {
-    int rejectionMethod = window->ui->comboBox_rectificationRejectionMethod->currentIndex();
-    double threshold = window->ui->lineEdit_rectificationRejectionThreshold->text().toDouble();
-    double confidence = window->ui->lineEdit_rectificationRejectionConfidence->text().toDouble();
-    int iterations = window->ui->lineEdit_rectificationIterations->text().toInt();
-    int rectificationMethod = window->ui->comboBox_rectificationMethod->currentIndex();
+    this->ui->label_status->setText(msg);
 
-    QElapsedTimer timer;
-    timer.start();
-
-    window->stereo.rect.rejectOutliers(rejectionMethod,threshold,confidence,iterations);
-    window->stereo.rect.rectifyImages(rectificationMethod,window->stereo.getOrgLeft(),
-                                      window->stereo.calib.getCameraMatrix(), window->stereo.calib.getDistortionCoefficient(),
-                                      window->stereo.getOrgRight(),
-                                      window->stereo.calib.getCameraMatrix(), window->stereo.calib.getDistortionCoefficient());
-
-    auto elapsed = timer.elapsed() / 1000.0;
-
-    window->ui->label_status->setText("Rectification finished. Time: "+QString::number(elapsed)+"s");
-
-    window->ui->pushButton_runRectification->setDisabled(false);
-    window->ui->label_showRectified->setDisabled(false);
-    window->ui->checkBox_showRectified->setDisabled(false);
-    window->ui->checkBox_showRectified->setChecked(true);
-    window->show_rectified_images();
+    this->ui->pushButton_runRectification->setDisabled(false);
+    this->ui->label_showRectified->setDisabled(false);
+    this->ui->checkBox_showRectified->setDisabled(false);
+    this->ui->checkBox_showRectified->setChecked(true);
+    this->show_rectified_images();
 }
 
 //###################################################### disparity tab ######################################################
