@@ -77,6 +77,8 @@ private slots:
 
     void image_rectification_finished(const QString& msg);
 
+    void on_actionSave_rectified_images_triggered();
+
 private:
     Ui::MainWindow *ui;
 

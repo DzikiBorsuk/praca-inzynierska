@@ -27,8 +27,10 @@ public:
 	};
 
 	//cv::Mat imageLeft, imageRight;
+		cv::Mat leftRotation, rightRotation;
 
 private:
+public:
 
 	cv::Mat rectImageLeft, rectImageMiddle, rectImageRight;
 	cv::Mat rectImageLeftSizeCorrection, rectImageMiddleSizeCorrection, rectImageRightSizeCorrection;
@@ -37,6 +39,8 @@ private:
 	std::vector<cv::Point2f> leftFilteredPoints, middleFilteredPoints, rightFilteredPoints;
 
 	cv::Mat relativeTranslation, relativeRotation, Q;
+
+
 
 	cv::Mat homLeft, homRight, homLeftCorrection, homRightCorrection;
 

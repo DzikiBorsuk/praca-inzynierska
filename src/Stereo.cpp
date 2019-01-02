@@ -93,6 +93,23 @@ void Stereo::rectify3Image()
 	//TODO implementation
 }
 
+void Stereo::saveRectifiedImages(const std::string & directory)
+{
+	cv::imwrite(directory + "/left.png", rect.getRectImageLeft());
+	cv::imwrite(directory + "/right.png", rect.getRectImageRight());
+
+	cv::FileStorage fs(directory+"/rectification_data.yml", cv::FileStorage::WRITE);
+
+    fs << "camera_matrix" << calib.getCameraMatrix();
+    fs << "distortion_coefficients" << calib.getDistortionCoefficient();
+    fs << "relativeRotation" << rect.relativeRotation;
+    fs << "relativeTranslation" << rect.relativeTranslation;
+	fs << "leftRotation" << rect.leftRotation;
+	fs << "rightRotation" << rect.rightRotation;
+
+	fs.release();
+}
+
 void Stereo::computeDisp()
 {
 

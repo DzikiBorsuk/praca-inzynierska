@@ -30,7 +30,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>2</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab_calibration">
        <attribute name="title">
@@ -999,8 +999,15 @@
      <addaction name="actionLeft_image"/>
      <addaction name="actionRight_image"/>
     </widget>
+    <widget class="QMenu" name="menuRectification">
+     <property name="title">
+      <string>Rectification</string>
+     </property>
+     <addaction name="actionSave_rectified_images"/>
+    </widget>
     <addaction name="menuLoad"/>
     <addaction name="menuCalibration"/>
+    <addaction name="menuRectification"/>
    </widget>
    <widget class="QMenu" name="menuOpitons">
     <property name="title">
@@ -1063,6 +1070,11 @@
   <action name="actionRight_image">
    <property name="text">
     <string>Right image</string>
+   </property>
+  </action>
+  <action name="actionSave_rectified_images">
+   <property name="text">
+    <string>Save rectified images</string>
    </property>
   </action>
  </widget>

@@ -154,7 +154,10 @@ void MainWindow::on_actionLoad_camera_params_triggered()
                                                     tr("Save camera params"), "",
                                                     tr("opencv XML/YAML files (*.xml *.yml);;All Files (*)"));
 
-    this->stereo.calib.loadParams(fileName.toUtf8().constData());
+    if(!fileName.isEmpty())
+    {
+        this->stereo.calib.loadParams(fileName.toUtf8().constData());
+    }
 }
 
 void MainWindow::on_actionSave_camera_params_triggered()
@@ -163,7 +166,10 @@ void MainWindow::on_actionSave_camera_params_triggered()
                                                     tr("Save camera params"), "",
                                                     tr("opencv XML/YAML files (*.xml *yml *.yaml);;All Files (*)"));
 
-    this->stereo.calib.saveParams(fileName.toUtf8().constData());
+    if(!fileName.isEmpty())
+    {
+        this->stereo.calib.saveParams(fileName.toUtf8().constData());
+    }
 }
 
 void MainWindow::on_button_loadImages_clicked()
@@ -171,7 +177,7 @@ void MainWindow::on_button_loadImages_clicked()
     QStringList filenames = QFileDialog::getOpenFileNames(this,
                                                           tr("Image calibration list"),
                                                           QDir::currentPath(),
-                                                          tr("PNG files (*.png);;JPEG files (*.jpeg *.jpg *.JPG *.jpe);;Bitmap files (*.bmp *.dib);;All files (*.*)"));
+                                                          tr("Image files (*.png *.PNG *.jpeg *.jpg *.JPG *.jpe *.bmp *.dib);;All files (*.*)"));
     if (!filenames.isEmpty())
     {
         std::vector<std::string> imagesList;
@@ -250,6 +256,7 @@ void MainWindow::calibration_finished(const QString& msg)
         this->ui->tableWidget_imagesList->setItem(i, 0, new QTableWidgetItem(QString::number(i)));
         if (goodImages[i])
         {
+            std::cout<<i<<std::endl;
             this->ui->tableWidget_imagesList
                 ->setItem(i, 1, new QTableWidgetItem(QString::number(reprojectionErrors[i])));
         }
@@ -535,6 +542,16 @@ void MainWindow::init_rectification_tab()
     QObject::connect(worker, SIGNAL(finish_imageRectification(const QString&)), this, SLOT(image_rectification_finished(const QString&)));
 
 
+}
+
+void MainWindow::on_actionSave_rectified_images_triggered()
+{
+    QString OutputFolder = QFileDialog::getExistingDirectory(this, ("Select Output Folder"), QDir::currentPath());
+
+    if(!OutputFolder.isEmpty())
+    {
+        stereo.saveRectifiedImages(OutputFolder.toUtf8().constData());
+    }
 }
 
 void MainWindow::on_pushButton_runRectification_clicked()

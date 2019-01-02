@@ -7,7 +7,7 @@
 #include <opencv2/highgui.hpp>
 #include <iostream>
 #include <vector>
-
+#include <opencv2/core/eigen.hpp>
 
 Rectification::Rectification()
 = default;
@@ -22,6 +22,8 @@ void Rectification::setPoints(const std::vector<cv::Point2f>& left_points, const
 	rightPoints = right_points;
 	leftFilteredPoints = left_points;
 	rightFilteredPoints = right_points;
+
+	//cv::cv2eigen()
 }
 
 void Rectification::setPoints(const std::vector<cv::Point2f>& left_points,
@@ -245,6 +247,9 @@ void Rectification::warp_image(const cv::Mat& left_image, const cv::Mat& left_ca
 		remap(left_image, rectImageLeftSizeCorrection, rmap[0][0], rmap[0][1], cv::INTER_LINEAR);
 		remap(right_image, rectImageRightSizeCorrection, rmap[1][0], rmap[1][1], cv::INTER_LINEAR);
 	}
+
+	leftRotation = R1;
+	rightRotation = R2;
 }
 
 

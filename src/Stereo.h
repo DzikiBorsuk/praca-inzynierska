@@ -53,6 +53,8 @@ public:
     void rectify2Image();
     void rectify3Image();
 
+    void saveRectifiedImages(const std::string &directory);
+
     void computeDisp();
 
     void show();

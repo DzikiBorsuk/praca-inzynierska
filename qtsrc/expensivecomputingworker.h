@@ -43,6 +43,7 @@ public slots:
        stereo->calib.calibrateCamera();
        stereo->calib.calculateReprojectionError();
        stereo->calib.undistortCalibrationImages();
+       stereo->calib.calibrateUndistortedCamera();
        //window->stereo.calib.drawPattern();
 
        auto elapsed = timer.elapsed() / 1000.0;
