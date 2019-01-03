@@ -9,3 +9,14 @@
 /build
 /captures
 .externalNativeBuild
+
+/*/build/
+/*/local.properties
+/*/out
+/*/*/build
+/*/*/production
+captures/
+.navigation/
+*.ipr
+*~
+*.swp
