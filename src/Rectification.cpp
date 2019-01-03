@@ -7,7 +7,7 @@
 #include <opencv2/highgui.hpp>
 #include <iostream>
 #include <vector>
-#include <opencv2/core/eigen.hpp>
+
 
 Rectification::Rectification()
 = default;
@@ -23,7 +23,6 @@ void Rectification::setPoints(const std::vector<cv::Point2f>& left_points, const
 	leftFilteredPoints = left_points;
 	rightFilteredPoints = right_points;
 
-	//cv::cv2eigen()
 }
 
 void Rectification::setPoints(const std::vector<cv::Point2f>& left_points,
@@ -138,9 +137,9 @@ void Rectification::warp_image(const cv::Mat& left_image, const cv::Mat& left_ca
 		                  relativeRotation, relativeTranslation, R1, R2, P1, P2, Q);
 
 		cv::initUndistortRectifyMap(left_camMatrix, left_distCoeff, R1, P1,
-			originalSize, CV_16SC2, rmap[0][0], rmap[0][1]);
+		                            originalSize, CV_16SC2, rmap[0][0], rmap[0][1]);
 		cv::initUndistortRectifyMap(right_camMatrix, right_distCoeff, R2, P2,
-			originalSize, CV_16SC2, rmap[1][0], rmap[1][1]);
+		                            originalSize, CV_16SC2, rmap[1][0], rmap[1][1]);
 
 		remap(left_image, rectImageLeft, rmap[0][0], rmap[0][1], cv::INTER_LINEAR);
 		remap(right_image, rectImageRight, rmap[1][0], rmap[1][1], cv::INTER_LINEAR);
@@ -158,11 +157,10 @@ void Rectification::warp_image(const cv::Mat& left_image, const cv::Mat& left_ca
 		P2 = right_camMatrix;
 
 
-
 		cv::initUndistortRectifyMap(left_camMatrix, left_distCoeff, R1, P1,
-			originalSize, CV_16SC2, rmap[0][0], rmap[0][1]);
+		                            originalSize, CV_16SC2, rmap[0][0], rmap[0][1]);
 		cv::initUndistortRectifyMap(right_camMatrix, right_distCoeff, R2, P2,
-			originalSize, CV_16SC2, rmap[1][0], rmap[1][1]);
+		                            originalSize, CV_16SC2, rmap[1][0], rmap[1][1]);
 
 		remap(left_image, rectImageLeft, rmap[0][0], rmap[0][1], cv::INTER_LINEAR);
 		remap(right_image, rectImageRight, rmap[1][0], rmap[1][1], cv::INTER_LINEAR);
@@ -221,7 +219,7 @@ void Rectification::warp_image(const cv::Mat& left_image, const cv::Mat& left_ca
 				max_y = right_points_dst[i].y;
 			}
 		}
-		double data[] = { 1, 0, -min_x, 0, 1, -min_y, 0, 0, 1 };
+		double data[] = {1, 0, -min_x, 0, 1, -min_y, 0, 0, 1};
 
 		cv::Mat temp(3, 3, CV_64F, data);
 
@@ -231,18 +229,16 @@ void Rectification::warp_image(const cv::Mat& left_image, const cv::Mat& left_ca
 		newSize = cv::Size(max_x - min_x + 1, max_y - min_y + 1);
 
 
-		
-			R1 = left_camMatrix.inv() * homLeftCorrection * left_camMatrix;
-			R2 = right_camMatrix.inv() * homRightCorrection * right_camMatrix;
-			P1 = left_camMatrix;
-			P2 = right_camMatrix;
-		
+		R1 = left_camMatrix.inv() * homLeftCorrection * left_camMatrix;
+		R2 = right_camMatrix.inv() * homRightCorrection * right_camMatrix;
+		P1 = left_camMatrix;
+		P2 = right_camMatrix;
 
 
 		cv::initUndistortRectifyMap(left_camMatrix, left_distCoeff, R1, P1,
-			newSize, CV_16SC2, rmap[0][0], rmap[0][1]);
+		                            newSize, CV_16SC2, rmap[0][0], rmap[0][1]);
 		cv::initUndistortRectifyMap(right_camMatrix, right_distCoeff, R2, P2,
-			newSize, CV_16SC2, rmap[1][0], rmap[1][1]);
+		                            newSize, CV_16SC2, rmap[1][0], rmap[1][1]);
 
 		remap(left_image, rectImageLeftSizeCorrection, rmap[0][0], rmap[0][1], cv::INTER_LINEAR);
 		remap(right_image, rectImageRightSizeCorrection, rmap[1][0], rmap[1][1], cv::INTER_LINEAR);
@@ -686,15 +682,87 @@ void Rectification::DirectSelfRectification()
 
 void Rectification::PoseEstimationRectification(const cv::Mat& leftCameraMatrix, const cv::Mat& rightCameraMatrix)
 {
+	//using kernelType = openMVG::robust::ACKernelAdaptor<openMVG::EightPointRelativePoseSolver,openMVG::fundamental::kernel::EpipolarDistanceError,>;
+	//using kernelType = openMVG::essential::kernel::EssentialKernel<>
+
+	// openMVG::Mat xL(2, leftPoints.size());
+	// openMVG::Mat xR(2, leftPoints.size());
+	// //openMVG::Mat x();
+	//
+	// for (int i = 0; i < leftPoints.size(); i++)
+	// {
+	// 	xL(0, i) = leftPoints[i].x;
+	// 	xL(1, i) = leftPoints[i].y;
+	// 	xR(0, i) = rightPoints[i].x;
+	// 	xR(1, i) = rightPoints[i].y;
+	// }
+	//
+	//
+	// const openMVG::cameras::Pinhole_Intrinsic
+	// 	camL(originalSize.width, originalSize.height, leftCameraMatrix.at<double>(0, 0),
+	// 	     leftCameraMatrix.at<double>(0, 2), leftCameraMatrix.at<double>(1, 2)),
+	// 	camR(originalSize.width, originalSize.height, rightCameraMatrix.at<double>(0, 0),
+	// 	     rightCameraMatrix.at<double>(0, 2), rightCameraMatrix.at<double>(1, 2));
+	//
+	//
+	// const std::pair<size_t, size_t> size_imaL(originalSize.width, originalSize.height);
+	// const std::pair<size_t, size_t> size_imaR(originalSize.width, originalSize.height);
+	//
+	// std::cout << "essential" << std::endl;
+	// openMVG::sfm::RelativePose_Info relativePose_info;
+	// std::exception_ptr eptr;
+	// try
+	// {
+	// 	if (!robustRelativePose(&camL, &camR, xL, xR, relativePose_info, size_imaL, size_imaR, 256))
+	// 	{
+	// 		std::cout << "problem" << std::endl;
+	// 		std::cerr << " /!\\ Robust relative pose estimation failure."
+	// 			<< std::endl;
+	// 		return;
+	// 	}
+	// }
+	// catch (...)
+	// {
+	// 	eptr = std::current_exception();
+	// }
+	// std::cout << "essential finished" << std::endl;
+
+
+	
 	cv::Mat F, E,E2, mask;
 
 	//F = cv::findFundamentalMat(leftFilteredPoints, rightFilteredPoints, cv::FM_8POINT);
 
 	//E2 = leftCameraMatrix.t() * F * rightCameraMatrix;
 
-	E = cv::findEssentialMat(leftPoints, rightPoints, leftCameraMatrix, cv::RANSAC, rejection_confidence, rejection_threshold, mask);
-	cv::recoverPose(E, leftPoints, rightPoints, leftCameraMatrix, relativeRotation, relativeTranslation,mask);
+	std::vector<cv::Point2d> leftPoints_, rightPoints_;
+	leftPoints_.reserve(leftPoints.size());
+	rightPoints_.reserve(leftPoints.size());
+	for(int i=0;i<leftPoints.size();i++)
+	{
+		double left_x = (leftPoints[i].x - leftCameraMatrix.at<double>(0,2))/leftCameraMatrix.at<double>(0,0);
+		double left_y = (leftPoints[i].y - leftCameraMatrix.at<double>(1,2))/leftCameraMatrix.at<double>(1,1);
+		cv::Point2d left(left_x, left_y);
+		double right_x = (rightPoints[i].x - rightCameraMatrix.at<double>(0,2))/rightCameraMatrix.at<double>(0,0);
+		double right_y = (rightPoints[i].y - rightCameraMatrix.at<double>(1,2))/rightCameraMatrix.at<double>(1,1);
+		cv::Point2d right(right_x, right_y);
+
+		leftPoints_.push_back(left);
+		rightPoints_.push_back(right);
+	}
+	cv::Mat fakeCameraMatrix = cv::Mat::eye(3, 3, CV_64F);
+
+	cv::Mat fakeE;
+	double threshold = rejection_threshold;
+	threshold /= ((leftCameraMatrix.at<double>(0, 0) + rightCameraMatrix.at<double>(0, 0)) / 2 + (leftCameraMatrix.at<double>(1, 1) + rightCameraMatrix.at<double>(1, 1)) / 2) / 2;
+
+	//E = cv::findEssentialMat(leftPoints, rightPoints, leftCameraMatrix, cv::RANSAC, rejection_confidence, rejection_threshold, mask);
+	fakeE = cv::findEssentialMat(leftPoints_, rightPoints_, fakeCameraMatrix, cv::RANSAC, rejection_confidence, threshold, mask);
+
+	//cv::recoverPose(E, leftPoints, rightPoints, leftCameraMatrix, relativeRotation, relativeTranslation,mask);
+	cv::recoverPose(fakeE, leftPoints_, rightPoints_, fakeCameraMatrix, relativeRotation, relativeTranslation,mask);
 	//cv::recoverPose(E2, leftFilteredPoints, rightFilteredPoints, leftCameraMatrix, relativeRotation, relativeTranslation);
+	
 }
 
 
