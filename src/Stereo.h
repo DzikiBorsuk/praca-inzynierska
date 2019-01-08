@@ -12,7 +12,7 @@
 #include "FeatureMatching.h"
 #include "Calibration.h"
 #include "Disparity.h"
-
+#include "ImageStructure.h"
 
 class Stereo
 {
@@ -25,15 +25,15 @@ public:
 
 private:
 public:
-	cv::Mat orgLeft, orgMiddle, orgRight;
-    cv::Mat left, middle, right;
+	ImageStructure orgLeft, orgMiddle, orgRight;
+	ImageStructure left, middle, right;
 public:
-    const cv::Mat &getLeft() const;
-    const cv::Mat &getOrgLeft() const;
-    const cv::Mat &getMiddle() const;
-    const cv::Mat &getOrgMiddle() const;
-    const cv::Mat &getRight() const;
-    const cv::Mat &getOrgRight() const;
+    const ImageStructure &getLeft() const;
+    const ImageStructure &getOrgLeft() const;
+    const ImageStructure &getMiddle() const;
+    const ImageStructure &getOrgMiddle() const;
+    const ImageStructure &getRight() const;
+    const ImageStructure &getOrgRight() const;
 private:
     //cv::Mat left_disp,right_disp,filtered_disp;
     //bool run_calibration;

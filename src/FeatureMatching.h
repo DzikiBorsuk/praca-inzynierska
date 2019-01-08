@@ -20,6 +20,10 @@ private:
 	cv::Ptr<cv::Feature2D> detector, descriptor;
 	cv::Ptr<cv::DescriptorMatcher> matcher;
 
+	double min_distance;
+
+
+private:
 	cv::Mat descriptor_left, descriptor_right;
 	std::vector<cv::KeyPoint> keypoints_left, keypoints_right;
 	std::vector<cv::DMatch> matches;
@@ -50,6 +54,8 @@ public:
 	void setDetector(int type, std::vector<double> params);
 	void setDescriptor(int type, std::vector<double> params);
 	void setMatcher(int type, std::vector<double> params);
+	void setMinDistance(double min_distance);
+
 
 	unsigned long getNumOfLeftKeyPoints();
 	unsigned long getNumOfMiddleKeyPoints();//TODO implementation

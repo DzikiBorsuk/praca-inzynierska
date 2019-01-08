@@ -7,6 +7,7 @@
 #include <opencv2/highgui.hpp>
 #include <iostream>
 #include <vector>
+#include <type_traits>
 
 
 Rectification::Rectification()
@@ -37,18 +38,23 @@ void Rectification::rejectOutliers(int method, double threshold, double confiden
 	rejection_threshold = threshold;
 	rejection_confidence = confidence;
 	rejection_iterations = iterations;
-
-	std::vector<int> inliers;
+	cv::Mat f;
+	//std::vector<int> inliers;
+	cv::Mat inliers;
 	switch (method)
 	{
 	case RejectionMethod::RANSAC:
-		cv::findHomography(leftPoints,
-		                   rightPoints,
-		                   cv::RANSAC,
-		                   threshold,
-		                   inliers,
-		                   iterations,
-		                   confidence);
+		// cv::findHomography(leftPoints,
+		//                    rightPoints,
+		//                    cv::RANSAC,
+		//                    threshold,
+		//                    inliers,
+		//                    iterations,
+		//                    confidence);
+
+	
+
+		f = cv::findFundamentalMat(leftPoints, rightPoints, cv::FM_RANSAC, rejection_threshold, rejection_confidence,inliers);
 
 		break;
 	case RejectionMethod::LMEDS:
@@ -61,8 +67,9 @@ void Rectification::rejectOutliers(int method, double threshold, double confiden
 		                   confidence);
 
 		break;
-	default: inliers.push_back(1);
-		inliers.resize(leftPoints.size(), inliers[0]);
+	default: 
+		//inliers.push_back(1);
+		//inliers.resize(leftPoints.size(), inliers[0]);
 		break;
 	}
 
@@ -71,9 +78,11 @@ void Rectification::rejectOutliers(int method, double threshold, double confiden
 	leftFilteredPoints.reserve(leftPoints.size());
 	rightFilteredPoints.reserve(rightPoints.size());
 
-	for (int i = 0; i < inliers.size(); ++i)
+	unsigned char* inl = inliers.data;
+
+	for (int i = 0; i < inliers.rows; ++i)
 	{
-		if (inliers[i] != 0)
+		if (inl[i] != 0)
 		{
 			leftFilteredPoints.push_back(leftPoints[i]);
 			rightFilteredPoints.push_back(rightPoints[i]);
@@ -758,6 +767,7 @@ void Rectification::PoseEstimationRectification(const cv::Mat& leftCameraMatrix,
 
 	//E = cv::findEssentialMat(leftPoints, rightPoints, leftCameraMatrix, cv::RANSAC, rejection_confidence, rejection_threshold, mask);
 	fakeE = cv::findEssentialMat(leftPoints_, rightPoints_, fakeCameraMatrix, cv::RANSAC, rejection_confidence, threshold, mask);
+	//fakeE = cv::findEssentialMat(leftPoints, rightPoints, fakeCameraMatrix, cv::RANSAC, rejection_confidence,rejection_threshold, mask);
 
 	//cv::recoverPose(E, leftPoints, rightPoints, leftCameraMatrix, relativeRotation, relativeTranslation,mask);
 	cv::recoverPose(fakeE, leftPoints_, rightPoints_, fakeCameraMatrix, relativeRotation, relativeTranslation,mask);

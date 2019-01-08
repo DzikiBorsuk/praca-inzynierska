@@ -15,4 +15,8 @@
         android:orderInCategory="102"
         android:title="@string/action_settings"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/cameraParams"
+        android:orderInCategory="103"
+        android:title="Camera Params" />
 </menu>

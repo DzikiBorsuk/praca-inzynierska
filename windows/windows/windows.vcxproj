@@ -89,7 +89,8 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Program Files\openMVG\include;E:\openCV\3.4.4\BUILD-3.4.4\install\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\openMVG\include\openMVG;E:\Eigen\include;C:\Program Files\openMVG\include;E:\openCV\3.4.4\BUILD-3.4.4\install\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_USE_MATH_DEFINES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>C:\Program Files\openMVG\lib;E:\openCV\3.4.4\BUILD-3.4.4\install\x64\vc15\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -121,7 +122,8 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Program Files\openMVG\include;E:\openCV\3.4.4\BUILD-3.4.4\install\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\openMVG\include\openMVG;E:\Eigen\include;C:\Program Files\openMVG\include;E:\openCV\3.4.4\BUILD-3.4.4\install\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_USE_MATH_DEFINES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -143,9 +145,13 @@
     <ClInclude Include="..\..\src\Calibration.h" />
     <ClInclude Include="..\..\src\Disparity.h" />
     <ClInclude Include="..\..\src\FeatureMatching.h" />
+    <ClInclude Include="..\..\src\ImageStructure.h" />
     <ClInclude Include="..\..\src\Rectification.h" />
     <ClInclude Include="..\..\src\Stereo.h" />
     <ClInclude Include="..\..\src\StereoCalibration.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ClassDiagram.cd" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

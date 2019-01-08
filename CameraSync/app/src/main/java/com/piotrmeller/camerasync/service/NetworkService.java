@@ -50,6 +50,7 @@ public class NetworkService extends Service {
 
     public void sendTakePictureReqsuest(){
         new Thread(() -> server.broadcast()).start();
+
     }
 
 

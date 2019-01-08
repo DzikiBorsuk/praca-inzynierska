@@ -28,38 +28,10 @@ MainWindow::MainWindow(QWidget *parent)
 
 
 
-
-    ui->slider_minDisparity->setRange(-320, 320);
-    ui->slider_minDisparity->setValue(-32);
-    ui->slider_maxDisparity->setRange(-320, 320);
-    ui->slider_maxDisparity->setValue(64);
-    ui->slider_blockSize->setRange(1, 51);
-    ui->slider_P1->setRange(0, 10000);
-    ui->slider_P2->setRange(0, 10000);
-    ui->slider_disp12MaxDiff->setRange(0, 320);
-    ui->slider_preFilterCap->setRange(0, 300);
-    ui->slider_uniquenessRatio->setRange(0, 100);
-    ui->slider_speckleWindowSize->setRange(0, 51);
-    ui->slider_speckleRange->setRange(0, 300);
-
-
-    QListIterator < QObject * > i(ui->frame_disparity->children());
-
-    //int a=0;
-    while (i.hasNext())
-    {
-        QSlider *slider;
-        if ((slider = qobject_cast<QSlider *>(i.next())))
-        {
-            connect(slider, SIGNAL(valueChanged(int)), this, SLOT(on_slider_moved(int)));
-            //a++;
-        }
-    }
-
-
     init_calibration_tab();
     init_feature_matching_tab();
     init_rectification_tab();
+    init_disparity_tab();
 
 }
 
@@ -89,6 +61,8 @@ void MainWindow::resizeEvent(QResizeEvent *event)
     this->newImages = true;
     this->show_calibration_image(-1, ui->checkBox_showUndistorted->isChecked());
     this->show_matchedFeatures();
+    this->show_rectified_images();
+    this->show_disparity();
 }
 
 void MainWindow::on_actionLeft_image_triggered()
@@ -97,13 +71,13 @@ void MainWindow::on_actionLeft_image_triggered()
                                                      tr("Load left image"), "",
                                                      tr("Image files (*.png *.PNG *.jpeg *.jpg *.JPG *.jpe *.bmp *.dib);;All files (*.*)"));
 
-    //QString cameraParamsFile = QFileDialog::getOpenFileName(this,
-    //                                                        tr("Load left camera params"), "",
-    //                                                        tr("opencv XML/YAML files (*.xml *.yml);;All Files (*)"));
+    QString cameraParamsFile = QFileDialog::getOpenFileName(this,
+                                                            tr("Load left camera params"), "",
+                                                            tr("opencv XML/YAML files (*.xml *.yml);;All Files (*)"));
 
     if(!imageFile.isEmpty())
     {
-        this->stereo.loadLeftImage(imageFile.toUtf8().constData());
+        this->stereo.loadLeftImage(imageFile.toUtf8().constData(),cameraParamsFile.toUtf8().constData());
         this->show_matchedFeatures();
         this->show_rectified_images();
     }
@@ -115,13 +89,13 @@ void MainWindow::on_actionRight_image_triggered()
                                                      tr("Load right image"), "",
                                                      tr("Image files (*.png *.PNG *.jpeg *.jpg *.JPG *.jpe *.bmp *.dib);;All files (*.*)"));
 
-    //QString cameraParamsFile = QFileDialog::getOpenFileName(this,
-    //                                                        tr("Load right camera params"), "",
-    //                                                        tr("opencv XML/YAML files (*.xml *.yml);;All Files (*)"));
+    QString cameraParamsFile = QFileDialog::getOpenFileName(this,
+                                                            tr("Load right camera params"), "",
+                                                            tr("opencv XML/YAML files (*.xml *.yml);;All Files (*)"));
 
     if(!imageFile.isEmpty())
     {
-        this->stereo.loadRightImage(imageFile.toUtf8().constData());
+        this->stereo.loadRightImage(imageFile.toUtf8().constData(),cameraParamsFile.toUtf8().constData());
         this->show_matchedFeatures();
         this->show_rectified_images();
     }
@@ -306,6 +280,10 @@ void MainWindow::show_calibration_image(int i, bool undistorted)
         {
             cv::cvtColor(src, image, CV_BGR2RGB);
         }
+        else
+        {
+            image = cv::Mat::zeros(3,4,CV_8UC3);
+        }
         //cv::Mat disp_color;
         //cv::cvtColor(disp, disp_color, CV_GRAY2RGB);
 
@@ -438,7 +416,26 @@ void MainWindow::on_comboBox_descriptor_currentIndexChanged(int index)
 
 void MainWindow::on_comboBox_matcher_currentIndexChanged(int index)
 {
+    std::vector<QString> options;
+    std::vector<QString> default_value;
 
+    switch (index)
+    {
+        default:options = {"min distance"};
+            default_value = {"0.1"};
+            break;
+    }
+
+    ui->tableWidget_matcherParams->clear();
+    ui->tableWidget_matcherParams->setColumnCount(2);
+    ui->tableWidget_matcherParams->setRowCount(options.size());
+    ui->tableWidget_matcherParams->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->tableWidget_matcherParams->verticalHeader()->setVisible(false);
+    for (int i = 0; i < options.size(); ++i)
+    {
+        ui->tableWidget_matcherParams->setItem(i, 0, new QTableWidgetItem(options[i]));
+        ui->tableWidget_matcherParams->setItem(i, 1, new QTableWidgetItem(default_value[i]));
+    }
 }
 
 void MainWindow::on_button_setDetector_clicked()
@@ -466,12 +463,20 @@ void MainWindow::on_button_setDescriptor_clicked()
     int type = ui->comboBox_descriptor->currentIndex();
 
     this->stereo.featureMatching.setDescriptor(type, params);
+
 }
 
 void MainWindow::on_button_setMatcher_clicked()
 {
+    std::vector<double> params;
+
+    for (int i = 0; i < ui->tableWidget_matcherParams->rowCount(); ++i)
+    {
+        params.emplace_back(ui->tableWidget_matcherParams->item(i, 1)->text().toDouble());
+    }
+
     int type = ui->comboBox_matcher->currentIndex();
-    this->stereo.featureMatching.setMatcher(type + 1, std::vector<double>());
+    this->stereo.featureMatching.setMatcher(type + 1, params);
 }
 
 void MainWindow::on_button_matchFeatures_clicked()
@@ -507,6 +512,10 @@ void MainWindow::show_matchedFeatures()
     if (!src.empty())
     {
         cv::cvtColor(src, img, CV_BGR2RGB);
+    }
+    else
+    {
+        img = cv::Mat::zeros(3,4,CV_8UC3);
     }
 
     // we finally can convert the image to a QPixmap and display it
@@ -598,9 +607,18 @@ void MainWindow::show_rectified_images()
     {
         cv::cvtColor(leftSrc, leftImg, CV_BGR2RGB);
     }
+    else
+    {
+        leftImg = cv::Mat::zeros(3,4,CV_8UC3);
+    }
+
     if(!rightSrc.empty())
     {
         cv::cvtColor(rightSrc, rightImg, CV_BGR2RGB);
+    }
+    else
+    {
+        rightImg = cv::Mat::zeros(3,4,CV_8UC3);
     }
 
     QImage left_image = QImage((unsigned char *) leftImg.data, leftImg.cols, leftImg.rows, QImage::Format_RGB888);
@@ -622,6 +640,8 @@ void MainWindow::show_rectified_images()
 
 void MainWindow::image_rectification_finished(const QString &msg)
 {
+    stereo.disp.initImages(stereo.rect.getRectImageLeft(),stereo.rect.getRectImageRight());
+
     this->ui->label_status->setText(msg);
 
     this->ui->pushButton_runRectification->setDisabled(false);
@@ -633,6 +653,50 @@ void MainWindow::image_rectification_finished(const QString &msg)
 
 //###################################################### disparity tab ######################################################
 
+void MainWindow::init_disparity_tab()
+{
+    ui->slider_minDisparity->setRange(-320, 320);
+    ui->slider_minDisparity->setValue(-32);
+    ui->slider_maxDisparity->setRange(16, 320);
+    ui->slider_maxDisparity->setValue(64);
+    ui->slider_blockSize->setRange(1, 51);
+    ui->slider_P1->setRange(0, 10000);
+    ui->slider_P2->setRange(0, 10000);
+    ui->slider_disp12MaxDiff->setRange(0, 320);
+    ui->slider_preFilterCap->setRange(0, 300);
+    ui->slider_uniquenessRatio->setRange(0, 100);
+    ui->slider_speckleWindowSize->setRange(0, 51);
+    ui->slider_speckleRange->setRange(0, 300);
+    ui->slider_previewContrast->setRange(0,5000);
+    ui->slider_contrast->setRange(0,5000);
+
+    ui->slider_previewContrast->setValue(1000);
+
+
+    QStringList colormapOptions = (QStringList() <<"None"<< "Autumn" << "Bone" << "Jet"<<"Winter"<<"Rainbow"<<"Ocean"<<"Summer"<<"Spring"<<"Cool"<<"HSV"<<"Pink"<<"Hot"<<"Parula");
+    ui->comboBox_colormap->addItems(colormapOptions);
+    ui->comboBox_colormap->setCurrentIndex(2);
+
+
+    QListIterator < QObject * > i(ui->frame_disparity->children());
+
+    //int a=0;
+    while (i.hasNext())
+    {
+        QSlider *slider;
+        if ((slider = qobject_cast<QSlider *>(i.next())))
+        {
+            connect(slider, SIGNAL(valueChanged(int)), this, SLOT(on_slider_moved(int)));
+            //a++;
+        }
+    }
+
+
+    ui->label_disparity->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+    QObject::connect(worker, SIGNAL(finish_computeDisparity(const QString&)), this, SLOT(compute_disparity_finished(const QString&)));
+    stereo.disp.initSGBM();
+}
+
 void MainWindow::on_slider_moved(int position)
 {
     QObject *obj = sender();
@@ -641,14 +705,7 @@ void MainWindow::on_slider_moved(int position)
 
     if (obj == ui->slider_minDisparity)
     {
-        int value = abs(position);
-
-        value = value - value % 16;
-
-        if (position < 0)
-        {
-            value = -value;
-        }
+        int value = position;
 
         stereo.disp.setMinDisparity(value);
 
@@ -667,7 +724,7 @@ void MainWindow::on_slider_moved(int position)
         }
 
 
-        stereo.disp.setMaxDisparity(value);
+        stereo.disp.setNumDisparity(value);
 
         ui->label_maxDisparity_value->setNum(value);
 
@@ -751,8 +808,30 @@ void MainWindow::on_slider_moved(int position)
         ui->label_speckleRange_value->setNum(value);
 
     }
+    else if(obj == ui->slider_previewContrast)
+    {
+        int value = position;
+
+        stereo.disp.setContrast(1.0*value/1000);
+        this->show_disparity();
+        return;
+    }
+    else if(obj == ui->slider_contrast)
+    {
+
+    }
 
     compute_disp_init();
+}
+
+void MainWindow::on_checkBox_disparityFilter_stateChanged(int arg1)
+{
+    this->show_disparity();
+}
+
+void MainWindow::on_comboBox_colormap_currentIndexChanged(int index)
+{
+    this->show_disparity();
 }
 
 void MainWindow::compute_disp_init()
@@ -761,9 +840,10 @@ void MainWindow::compute_disp_init()
     {
         is_computing_disparity = true;
         compute_disparity = false;
-        std::thread disparityThread(compute_disp, this);
+        QMetaObject::invokeMethod( worker, "computeDisparity",Q_ARG(Stereo*, &stereo));
+        //std::thread disparityThread(compute_disp, this);
         //disparityThread.join();
-        disparityThread.detach();
+        //disparityThread.detach();
     }
     else
     {
@@ -772,24 +852,56 @@ void MainWindow::compute_disp_init()
 
 }
 
-void MainWindow::compute_disp(MainWindow *window)
+void MainWindow::compute_disparity_finished(const QString& msg)
 {
-    //stereo.computeDisp();
-    window->stereo.computeDisp();
-    window->show_disp();
+    this->ui->label_status->setText(msg);
+    this->show_disparity();
 }
 
-void MainWindow::show_disp()
+void MainWindow::show_disparity()
 {
     is_computing_disparity = false;
 
-    cv::Mat disp = stereo.disp.vis_filter;
+    std::cout<<"disparity_display"<<std::endl;
+
+    cv::Mat src;
+    //cv::Mat src = stereo.disp.vis_filter;
+//cv::Mat src = stereo.disp.vis_left;
+
+    int colormap = ui->comboBox_colormap->currentIndex();
+
+    if(ui->checkBox_disparityFilter->isChecked())
+    {
+        src = stereo.disp.getDisparityFiltered(colormap-1);
+    }
+    else
+    {
+        src = stereo.disp.getDisparity(colormap-1);
+    }
+
+    cv::Mat disp;
+
+    if (!src.empty())
+    {
+        if(src.channels()==3)
+        {
+            cv::cvtColor(src, disp, CV_BGR2RGB);
+        }
+        else
+        {
+            cv::cvtColor(src, disp, CV_GRAY2RGB);
+        }
+    }
+    else
+    {
+        disp=cv::Mat::zeros(3,4,CV_8UC3);
+    }
 
     //cv::Mat disp_color;
     //cv::cvtColor(disp, disp_color, CV_GRAY2RGB);
 
     // we finally can convert the image to a QPixmap and display it
-    QImage disparity_image = QImage((unsigned char *) disp.data, disp.cols, disp.rows, QImage::Format_Grayscale8);
+    QImage disparity_image = QImage((unsigned char *) disp.data, disp.cols, disp.rows, QImage::Format_RGB888);
     QPixmap disparity_pixmap = QPixmap::fromImage(disparity_image);
 
 
@@ -807,56 +919,3 @@ void MainWindow::show_disp()
     }
 }
 
-void MainWindow::init_disparity_tab()
-{
-    static bool a = true;
-
-    if (a)
-    {
-        a = false;
-        stereo.match_feautures();
-        //stereo.rectifyImage();
-        stereo.disp.initSGBM();
-        stereo.computeDisp();
-    }
-
-    cv::Mat disp = stereo.disp.vis_filter;
-
-    //cv::Mat disp_color;
-    //cv::cvtColor(disp, disp_color, CV_GRAY2RGB);
-
-    // we finally can convert the image to a QPixmap and display it
-    QImage disparity_image = QImage((unsigned char *) disp.data, disp.cols, disp.rows, QImage::Format_Grayscale8);
-    QPixmap disparity_pixmap = QPixmap::fromImage(disparity_image);
-
-
-    // some computation to resize the image if it is too big to fit in the GUI
-    //int max_width  = std::min(ui->label_disparity->width(),  disparity_image.width());
-    //int max_height = std::min(ui->label_disparity->height(), disparity_image.height());
-    int max_width = ui->label_disparity->width();
-    int max_height = ui->label_disparity->height();
-    ui->label_disparity->setPixmap(disparity_pixmap.scaled(max_width, max_height, Qt::KeepAspectRatio));
-
-
-    cv::Mat left_bgr = stereo.rect.getRectImageLeft();
-    cv::Mat right_bgr = stereo.rect.getRectImageRight();
-
-    cv::Mat left, right;
-    cv::cvtColor(left_bgr, left, CV_BGR2RGB);
-    cv::cvtColor(right_bgr, right, CV_BGR2RGB);
-
-    // we finally can convert the image to a QPixmap and display it
-    QImage left_image = QImage((unsigned char *) left.data, left.cols, left.rows, QImage::Format_RGB888);
-    QPixmap left_pixmap = QPixmap::fromImage(left_image);
-    QImage right_image = QImage((unsigned char *) right.data, right.cols, right.rows, QImage::Format_RGB888);
-    QPixmap right_pixmap = QPixmap::fromImage(right_image);
-
-    // some computation to resize the image if it is too big to fit in the GUI
-    int max_width_left = ui->label_leftImage->width();
-    int max_height_left = ui->label_leftImage->height();
-    ui->label_leftImage->setPixmap(left_pixmap.scaled(max_width_left, max_height_left, Qt::KeepAspectRatio));
-
-    int max_width_right = ui->label_rightImage->width();
-    int max_height_right = ui->label_rightImage->height();
-    ui->label_rightImage->setPixmap(right_pixmap.scaled(max_width_right, max_height_right, Qt::KeepAspectRatio));
-}

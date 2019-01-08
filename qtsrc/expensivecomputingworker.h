@@ -17,6 +17,7 @@ signals:
     void finish_runCalibration(const QString& msg);
     void finish_featureMatching(const QString& msg);
     void finish_imageRectification(const QString& msg);
+    void finish_computeDisparity(const QString& msg);
 
 public slots:
 
@@ -74,16 +75,30 @@ public slots:
        timer.start();
 
        stereo->rect.rejectOutliers(rejectionMethod,threshold,confidence,iterations);
-       stereo->rect.rectifyImages(rectificationMethod,stereo->getOrgLeft(),
-                                         stereo->calib.getCameraMatrix(), stereo->calib.getDistortionCoefficient(),
-                                         stereo->getOrgRight(),
-                                         stereo->calib.getCameraMatrix(), stereo->calib.getDistortionCoefficient());
+       stereo->rect.rectifyImages(rectificationMethod,stereo->getOrgLeft().image,
+                                         stereo->getOrgLeft().cameraMatrix, stereo->getOrgLeft().distortionCoefficient,
+                                         stereo->getOrgRight().image,
+                                         stereo->getOrgRight().cameraMatrix, stereo->getOrgRight().distortionCoefficient);
 
        auto elapsed = timer.elapsed() / 1000.0;
 
        QString msg = "Rectification finished. Time " + QString::number(elapsed) + "s";
 
        emit finish_imageRectification(msg);
+   }
+
+   void computeDisparity(Stereo *stereo)
+   {
+       QElapsedTimer timer;
+       timer.start();
+
+       stereo->disp.SGBM();
+       stereo->disp.filterDisparity();
+
+       auto elapsed = timer.elapsed() / 1000.0;
+
+       QString msg = "Computing disparity finished. Time " + QString::number(elapsed) + "s";
+       emit finish_computeDisparity(msg);
    }
 };
 

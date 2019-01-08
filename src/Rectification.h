@@ -6,16 +6,7 @@
 #define PRACA_INZYNIERSKA_RECTIFICATION_H
 
 #include <opencv2/core.hpp>
-#include <geometry/pose3.hpp>
-#include <numeric/numeric.h>
-#include <cameras/Camera_Intrinsics.hpp>
-#include <sfm/pipelines/sfm_robust_model_estimation.hpp>
-#include <robust_estimation/robust_estimator_ACRansacKernelAdaptator.hpp>
-#include <multiview/solver_essential_kernel.hpp>
-#include <cameras/Camera_Pinhole.hpp>
-#include <robust_estimation/robust_estimator_ACRansac.hpp>
-#include <multiview/solver_essential_eight_point.hpp>
-#include <openMVG/multiview/motion_from_essential.hpp>
+
 
 class Rectification
 {
@@ -39,7 +30,6 @@ public:
 	//cv::Mat imageLeft, imageRight;
 		cv::Mat leftRotation, rightRotation;
 
-private:
 public:
 
 	cv::Mat rectImageLeft, rectImageMiddle, rectImageRight;

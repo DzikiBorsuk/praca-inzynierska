@@ -51,8 +51,9 @@ public:
     void loadParams(const std::string &filename);
     void saveParams(const std::string &filename);
 
-    cv::Mat getCameraMatrix();
-    cv::Mat getDistortionCoefficient();
+	const cv::Mat& getCameraMatrix() const;
+	const cv::Mat& getDistortionCoefficient() const;
+	const cv::Mat& getCameraMatrixAfterUndistortion() const;
 
     void loadImagesList(const std::vector<std::string> &image_path_list);
 

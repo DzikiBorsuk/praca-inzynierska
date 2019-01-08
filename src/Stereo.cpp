@@ -37,49 +37,67 @@
 //}
 
 Stereo::Stereo(const std::string &_left, const std::string &_right, const std::string &_cameraParamsFile)
-    : calib(_cameraParamsFile)
 {
-    left = cv::imread(_left);
-    right = cv::imread(_right);
+    // left = cv::imread(_left);
+    // right = cv::imread(_right);
+    //
+    //
+    // if (!_cameraParamsFile.empty())
+    // {
+    //     left = calib.undistort(left);
+    //     right = calib.undistort(right);
+    // }
+
+	loadLeftImage(_left, _cameraParamsFile);
+	loadRightImage(_right, _cameraParamsFile);
 
 
-    if (!_cameraParamsFile.empty())
-    {
-        left = calib.undistort(left);
-        right = calib.undistort(right);
-    }
-
+	
 }
 
 void Stereo::loadLeftImage(const std::string &image_path, const std::string &camera_params_path)
 {
-    orgLeft = cv::imread(image_path);
+    orgLeft.image = cv::imread(image_path);
     if (!camera_params_path.empty())
     {
         calib.loadParams(camera_params_path);
+		if(!calib.getCameraMatrix().empty())
+		{
+			orgLeft.cameraMatrix = calib.getCameraMatrix();
+			orgLeft.distortionCoefficient = calib.getDistortionCoefficient();
+			left.distortionCoefficient = calib.getDistortionCoefficient();
+			left.cameraMatrix = calib.getCameraMatrixAfterUndistortion();
+		}
     }
-    left = calib.undistort(orgLeft);
-    if (left.empty())
+    left.image = calib.undistort(orgLeft.image);
+    if (left.image.empty())
 	{
 		left = orgLeft;
 	}
-    featureMatching.loadLeftImage(left);
-    //rect.setLeftImage(left);
+    featureMatching.loadLeftImage(left.image);
+
 }
 
 void Stereo::loadRightImage(const std::string &image_path, const std::string &camera_params_path)
 {
-    orgRight = cv::imread(image_path);
+    orgRight.image = cv::imread(image_path);
     if (!camera_params_path.empty())
     {
         calib.loadParams(camera_params_path);
+		if (!calib.getCameraMatrix().empty())
+		{
+			orgRight.cameraMatrix = calib.getCameraMatrix();
+			orgRight.distortionCoefficient = calib.getDistortionCoefficient();
+			right.distortionCoefficient = calib.getDistortionCoefficient();
+			right.cameraMatrix = calib.getCameraMatrixAfterUndistortion();
+		}
     }
-    right = calib.undistort(orgRight);
-    if (right.empty())
+    right.image = calib.undistort(orgRight.image);
+    if (right.image.empty())
 	{
 		right = orgRight;
 	}
-    featureMatching.loadRightImage(right);
+    featureMatching.loadRightImage(right.image);
 
 }
 
@@ -131,97 +149,97 @@ void Stereo::show()
 
 void Stereo::match_feautures()
 {
-    if (!left.data || !right.data)
-    {
-        std::cout << " --(!) Error reading images " << std::endl;
-        return;
-    }
-    //-- Step 1: Detect the keypoints using SURF Detector, compute the descriptors
-    int minHessian = 400;
-    cv::Ptr<cv::xfeatures2d::SURF> detector = cv::xfeatures2d::SURF::create();
-    detector->setHessianThreshold(minHessian);
-    cv::Mat descriptors_1, descriptors_2;
-    detector->detectAndCompute(left, cv::Mat(), keypoints_left, descriptors_1);
-    detector->detectAndCompute(right, cv::Mat(), keypoints_right, descriptors_2);
-    //-- Step 2: Matching descriptor vectors using FLANN matcher
-    cv::FlannBasedMatcher matcher;
-    std::vector<cv::DMatch> matches;
-    matcher.match(descriptors_1, descriptors_2, matches);
-    double max_dist = 0;
-    double min_dist = 200;
-    //-- Quick calculation of max and min distances between keypoints
-    for (int i = 0; i < descriptors_1.rows; i++)
-    {
-        double dist = matches[i].distance;
-        if (dist < min_dist)
-        { min_dist = dist; }
-        if (dist > max_dist)
-        { max_dist = dist; }
-    }
-    printf("-- Max dist : %f \n", max_dist);
-    printf("-- Min dist : %f \n", min_dist);
-    //-- Draw only "good" matches (i.e. whose distance is less than 2*min_dist,
-    //-- or a small arbitrary value ( 0.02 ) in the event that min_dist is very
-    //-- small)
-    //-- PS.- radiusMatch can also be used here.
-    std::vector<cv::DMatch> good_matches;
-    std::vector<int> good_l;
-    std::vector<int> good_r;
-    for (int i = 0; i < descriptors_1.rows; i++)
-    {
-        if (matches[i].distance <= std::max(2 * min_dist, 0.05))
-        {
-            good_matches.push_back(matches[i]);
-            //good.push_back(i);//Todo:  poprawic
-
-            good_l.push_back(matches[i].queryIdx);
-            good_r.push_back(matches[i].trainIdx);
-        }
-    }
-    //-- Draw only "good" matches
-    cv::Mat img_matches;
-    drawMatches(left, keypoints_left, right, keypoints_right,
-                good_matches, img_matches, cv::Scalar::all(-1), cv::Scalar::all(-1),
-                std::vector<char>(), cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
-    //-- Show detected matches
-
-    cv::KeyPoint::convert(keypoints_left, lk, good_l);//Todo:  poprawic
-    cv::KeyPoint::convert(keypoints_right, rk, good_r);
-
-
-    //cv::namedWindow("Good Matches", cv::WINDOW_NORMAL);
-    //cv::imshow("Good Matches", img_matches);
-    //cv::resizeWindow("Good Matches", 1200, 900);
-    for (int i = 0; i < (int) good_matches.size(); i++)
-    {
-        printf("-- Good Match [%d] Keypoint 1: %d  -- Keypoint 2: %d  \n", i, good_matches[i].queryIdx,
-               good_matches[i].trainIdx);
-    }
-    //cv::waitKey(0);
-    std::cout << "a" << std::endl;
+    // if (!left.data || !right.data)
+    // {
+    //     std::cout << " --(!) Error reading images " << std::endl;
+    //     return;
+    // }
+    // //-- Step 1: Detect the keypoints using SURF Detector, compute the descriptors
+    // int minHessian = 400;
+    // cv::Ptr<cv::xfeatures2d::SURF> detector = cv::xfeatures2d::SURF::create();
+    // detector->setHessianThreshold(minHessian);
+    // cv::Mat descriptors_1, descriptors_2;
+    // detector->detectAndCompute(left, cv::Mat(), keypoints_left, descriptors_1);
+    // detector->detectAndCompute(right, cv::Mat(), keypoints_right, descriptors_2);
+    // //-- Step 2: Matching descriptor vectors using FLANN matcher
+    // cv::FlannBasedMatcher matcher;
+    // std::vector<cv::DMatch> matches;
+    // matcher.match(descriptors_1, descriptors_2, matches);
+    // double max_dist = 0;
+    // double min_dist = 200;
+    // //-- Quick calculation of max and min distances between keypoints
+    // for (int i = 0; i < descriptors_1.rows; i++)
+    // {
+    //     double dist = matches[i].distance;
+    //     if (dist < min_dist)
+    //     { min_dist = dist; }
+    //     if (dist > max_dist)
+    //     { max_dist = dist; }
+    // }
+    // printf("-- Max dist : %f \n", max_dist);
+    // printf("-- Min dist : %f \n", min_dist);
+    // //-- Draw only "good" matches (i.e. whose distance is less than 2*min_dist,
+    // //-- or a small arbitrary value ( 0.02 ) in the event that min_dist is very
+    // //-- small)
+    // //-- PS.- radiusMatch can also be used here.
+    // std::vector<cv::DMatch> good_matches;
+    // std::vector<int> good_l;
+    // std::vector<int> good_r;
+    // for (int i = 0; i < descriptors_1.rows; i++)
+    // {
+    //     if (matches[i].distance <= std::max(2 * min_dist, 0.05))
+    //     {
+    //         good_matches.push_back(matches[i]);
+    //         //good.push_back(i);//Todo:  poprawic
+    //
+    //         good_l.push_back(matches[i].queryIdx);
+    //         good_r.push_back(matches[i].trainIdx);
+    //     }
+    // }
+    // //-- Draw only "good" matches
+    // cv::Mat img_matches;
+    // drawMatches(left, keypoints_left, right, keypoints_right,
+    //             good_matches, img_matches, cv::Scalar::all(-1), cv::Scalar::all(-1),
+    //             std::vector<char>(), cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
+    // //-- Show detected matches
+    //
+    // cv::KeyPoint::convert(keypoints_left, lk, good_l);//Todo:  poprawic
+    // cv::KeyPoint::convert(keypoints_right, rk, good_r);
+    //
+    //
+    // //cv::namedWindow("Good Matches", cv::WINDOW_NORMAL);
+    // //cv::imshow("Good Matches", img_matches);
+    // //cv::resizeWindow("Good Matches", 1200, 900);
+    // for (int i = 0; i < (int) good_matches.size(); i++)
+    // {
+    //     printf("-- Good Match [%d] Keypoint 1: %d  -- Keypoint 2: %d  \n", i, good_matches[i].queryIdx,
+    //            good_matches[i].trainIdx);
+    // }
+    // //cv::waitKey(0);
+    // std::cout << "a" << std::endl;
 }
 
-const cv::Mat &Stereo::getLeft() const
+const ImageStructure &Stereo::getLeft() const
 {
     return left;
 }
-const cv::Mat &Stereo::getOrgLeft() const
+const ImageStructure &Stereo::getOrgLeft() const
 {
 	return orgLeft;
 }
-const cv::Mat &Stereo::getMiddle() const
+const ImageStructure &Stereo::getMiddle() const
 {
     return middle;
 }
-const cv::Mat &Stereo::getOrgMiddle() const
+const ImageStructure &Stereo::getOrgMiddle() const
 {
 	return orgMiddle;
 }
-const cv::Mat &Stereo::getRight() const
+const ImageStructure &Stereo::getRight() const
 {
     return right;
 }
-const cv::Mat &Stereo::getOrgRight() const
+const ImageStructure &Stereo::getOrgRight() const
 {
 	return orgRight;
 }

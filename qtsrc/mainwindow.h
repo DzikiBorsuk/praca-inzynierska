@@ -79,6 +79,14 @@ private slots:
 
     void on_actionSave_rectified_images_triggered();
 
+    //########################### disparity tab ###########################
+
+    void compute_disparity_finished(const QString& msg);
+
+    void on_checkBox_disparityFilter_stateChanged(int arg1);
+
+    void on_comboBox_colormap_currentIndexChanged(int index);
+
 private:
     Ui::MainWindow *ui;
 
@@ -116,14 +124,12 @@ private:
     //########################### disparity tab ###########################
 
 
-    static void compute_disp(MainWindow *window);
-
     bool compute_disparity;
     bool is_computing_disparity;
 
     void compute_disp_init();
     //void compute_disp();
-    void show_disp();
+    void show_disparity();
 
     void init_disparity_tab();
 

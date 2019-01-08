@@ -59,15 +59,21 @@ void Calibration::saveParams(const std::string &filename)
 
 }
 
-cv::Mat Calibration::getCameraMatrix()
+const cv::Mat&  Calibration::getCameraMatrix() const
 {
-    return cameraMatrix.clone();
+    return cameraMatrix;
 }
 
-cv::Mat Calibration::getDistortionCoefficient()
+const cv::Mat&  Calibration::getDistortionCoefficient() const
 {
-    return distortionCoefficient.clone();
+    return distortionCoefficient;
 }
+
+const cv::Mat& Calibration::getCameraMatrixAfterUndistortion() const
+{
+	return cameraMatrixAfterUndistortion;
+}
+
 
 void Calibration::loadImagesList(const std::vector<std::string> &image_path_list)
 {
@@ -99,6 +105,8 @@ void Calibration::findCalibrationPoints(const cv::Size &pattern_size,
 
 void Calibration::calibrateCamera(int flags)
 {
+	flags = cv::CALIB_ZERO_TANGENT_DIST | cv::CALIB_FIX_K1 | cv::CALIB_FIX_K2 | cv::CALIB_FIX_K3 | cv::CALIB_FIX_K4 | cv::CALIB_FIX_K5 | cv::CALIB_FIX_K6;
+
     std::vector<std::vector<cv::Point2f>> foundCorners;
     std::vector<std::vector<cv::Point3f>> foundRealCorners;
     foundCorners.reserve(cornersArray.size());
