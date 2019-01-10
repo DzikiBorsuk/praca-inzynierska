@@ -1,18 +1,22 @@
 package com.piotrmeller.camerasync.service;
 
+import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
+import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Enumeration;
 
 public class Server {
     private NetworkService service;
     private DatagramSocket socket;
+    private DatagramSocket syncSocket;
     private boolean isServerOpen = false;
     //static final int serverPORT = 8080;
     private static final int MAX_UDP_DATAGRAM_LEN = 256;
@@ -24,8 +28,10 @@ public class Server {
     }
 
     public void startServer() {
+        closeServer();
         try {
             socket = new DatagramSocket();
+            syncSocket = new DatagramSocket();
             String address = socket.getLocalAddress().getHostAddress();
             int port = socket.getLocalPort();
 
@@ -33,6 +39,7 @@ public class Server {
 
             Thread thread = new ServerReceiverThread();
             thread.start();
+            new ServerSyncThread().start();
             //activity.infoip.setText(address + " : " + Integer.toString(port));
         } catch (Throwable e) {
             e.printStackTrace();
@@ -43,6 +50,11 @@ public class Server {
         if (socket != null) {
             socket.close();
             socket = null;
+        }
+        if(syncSocket!=null)
+        {
+            syncSocket.close();
+            socket=null;
         }
         isServerOpen = false;
         clientsList.clear();
@@ -78,7 +90,8 @@ public class Server {
 
                             new Thread(() -> {
 
-                                final String response = "ack_connect";
+                                String port = Integer.toString(syncSocket.getLocalPort());
+                                final String response = "ack_connect%"+port;
                                 DatagramPacket packet1 = new DatagramPacket(response.getBytes(), response.length(), address);
                                 try {
                                     socket.send(packet1);
@@ -100,12 +113,37 @@ public class Server {
         }
     }
 
+    public class ServerSyncThread extends Thread {
+
+        @Override
+        public void run() {
+
+            ByteBuffer buffer = ByteBuffer.allocate(8);
+            DatagramPacket packet = new DatagramPacket(buffer.array(),0,buffer.limit());
+            while(isServerOpen)
+            {
+                try {
+                    syncSocket.receive(packet);
+                    SocketAddress address = packet.getSocketAddress();
+                    buffer.clear();
+                    buffer.putLong(System.currentTimeMillis());
+                    packet = new DatagramPacket(buffer.array(),0,buffer.limit(),address);
+                    syncSocket.send(packet);
+                    buffer.clear();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
 
     public void broadcast() {
+        long targetTimestamp = System.currentTimeMillis()+500;
         for (InetSocketAddress address : clientsList) {
             new Thread(() -> {
 
-                String message = "photo";
+                String message = "photo%"+Long.toString(targetTimestamp);
 
 
                 DatagramPacket packet = new DatagramPacket(message.getBytes(), message.length(), address);

@@ -24,6 +24,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
@@ -114,7 +115,8 @@ public class MainActivity extends AppCompatActivity implements ServiceCallbacks 
             public void onClick(View view) {
                 //takePicture();
                 mService.sendTakePictureReqsuest();
-                new Handler().postDelayed(() -> cameraFragment.takePictureImmediately(), 150);
+                //new Handler().postDelayed(() -> cameraFragment.takePictureImmediately(), 150);
+                takePictureRequest(500+150);
             }
         });
 
@@ -208,6 +210,8 @@ public class MainActivity extends AppCompatActivity implements ServiceCallbacks 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        Intent intent = new Intent(this, NetworkService.class);
+        stopService(intent);
         //serverOld.onDestroy();
     }
 
@@ -248,7 +252,9 @@ public class MainActivity extends AppCompatActivity implements ServiceCallbacks 
 
 
     @Override
-    public void takePictureRequest() {
-        cameraFragment.takePictureImmediately();
+    public void takePictureRequest(long delay) {
+        //new Handler().postDelayed(() -> cameraFragment.takePictureImmediately(), delay);
+        //cameraFragment.takePictureImmediately();
+        new Handler(Looper.getMainLooper()).postDelayed(() -> cameraFragment.takePictureImmediately(),delay);
     }
 }

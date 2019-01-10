@@ -843,7 +843,8 @@ public class CameraFragment extends Fragment
     }
 
     public void takePictureImmediately(){
-        runPrecaptureSequence();
+        //runPrecaptureSequence();
+        captureStillPicture();
     }
 
     /**
