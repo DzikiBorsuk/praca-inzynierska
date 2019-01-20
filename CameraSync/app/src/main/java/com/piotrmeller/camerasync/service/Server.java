@@ -78,12 +78,9 @@ public class Server {
             while (isServerOpen) {
                 try {
                     socket.receive(packet);
-
                     InetSocketAddress address = (InetSocketAddress) packet.getSocketAddress();
-
                     message = new String(packet.getData(), 0,
                             packet.getLength());
-
                     if (message.equals("connect")) {
                         if (!clientsList.contains(address)) {
                             clientsList.add(address);
@@ -101,15 +98,10 @@ public class Server {
                             }).start();
                         }
                     }
-
-                } catch (SocketTimeoutException e) {
-                    // timeout exception.
-
                 } catch (Throwable e) {
                     e.printStackTrace();
                 }
             }
-
         }
     }
 
@@ -126,7 +118,8 @@ public class Server {
                     syncSocket.receive(packet);
                     SocketAddress address = packet.getSocketAddress();
                     buffer.clear();
-                    buffer.putLong(System.currentTimeMillis());
+                    //buffer.putLong(System.currentTimeMillis());
+                    buffer.putLong(System.nanoTime());
                     packet = new DatagramPacket(buffer.array(),0,buffer.limit(),address);
                     syncSocket.send(packet);
                     buffer.clear();
@@ -138,8 +131,7 @@ public class Server {
     }
 
 
-    public void broadcast() {
-        long targetTimestamp = System.currentTimeMillis()+500;
+    public void broadcast(long targetTimestamp) {
         for (InetSocketAddress address : clientsList) {
             new Thread(() -> {
 

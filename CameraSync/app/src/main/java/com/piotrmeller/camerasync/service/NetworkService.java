@@ -48,8 +48,8 @@ public class NetworkService extends Service {
         this.callbacks = callbacks;
     }
 
-    public void sendTakePictureReqsuest(){
-        new Thread(() -> server.broadcast()).start();
+    public void sendTakePictureReqsuest(long targetTimestamp){
+        new Thread(() -> server.broadcast(targetTimestamp)).start();
 
     }
 

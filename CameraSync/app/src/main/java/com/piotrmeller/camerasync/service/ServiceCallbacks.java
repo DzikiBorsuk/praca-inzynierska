@@ -2,6 +2,6 @@ package com.piotrmeller.camerasync.service;
 
 public interface ServiceCallbacks {
 
-    void takePictureRequest(long delay);
+    void takePictureRequest(long target);
 
 }

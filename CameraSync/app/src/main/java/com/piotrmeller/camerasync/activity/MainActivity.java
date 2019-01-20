@@ -114,9 +114,11 @@ public class MainActivity extends AppCompatActivity implements ServiceCallbacks 
             @Override
             public void onClick(View view) {
                 //takePicture();
-                mService.sendTakePictureReqsuest();
+                long targetTimestamp = System.nanoTime()+600000000;
+                mService.sendTakePictureReqsuest(targetTimestamp);
                 //new Handler().postDelayed(() -> cameraFragment.takePictureImmediately(), 150);
-                takePictureRequest(500+150);
+                //takePictureRequest((targetTimestamp-System.nanoTime())/1000000);
+                takePictureRequest(targetTimestamp+200000000);
             }
         });
 
@@ -252,9 +254,33 @@ public class MainActivity extends AppCompatActivity implements ServiceCallbacks 
 
 
     @Override
-    public void takePictureRequest(long delay) {
+    public void takePictureRequest(long target) {
         //new Handler().postDelayed(() -> cameraFragment.takePictureImmediately(), delay);
         //cameraFragment.takePictureImmediately();
-        new Handler(Looper.getMainLooper()).postDelayed(() -> cameraFragment.takePictureImmediately(),delay);
+        //new Handler(Looper.getMainLooper()).postDelayed(() -> cameraFragment.takePictureImmediately(),delay);
+        new Thread(() -> {
+            boolean loop=true;
+            while (loop)
+            {
+                if(target-System.nanoTime()>100000000)
+                {
+                    try {
+                        Thread.sleep(50);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                else
+                {
+                    loop = false;
+                    while (target-System.nanoTime()>0)
+                    {
+
+                    }
+                    runOnUiThread(() -> cameraFragment.takePictureImmediately());
+                }
+            }
+
+        }).start();
     }
 }

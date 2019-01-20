@@ -37,7 +37,6 @@ public class Client {
     }
 
     public void connectToServer(final SocketAddress address) {
-
         disconnectFromServer();
         try {
             socket = new DatagramSocket();
@@ -47,15 +46,12 @@ public class Client {
             disconnectFromServer();
             return;
         }
-
-
         final String connectMsg = "connect";
         final String ackMsg = "ack_connect";
         new Thread(new Runnable() {
             @Override
             public void run() {
                 DatagramPacket packet = new DatagramPacket(connectMsg.getBytes(), connectMsg.length(), address);
-
                 String message = null;
                 byte[] buf = new byte[MAX_UDP_DATAGRAM_LEN];
                 DatagramPacket receivePacket = new DatagramPacket(buf, buf.length, address);
@@ -69,9 +65,7 @@ public class Client {
                         continue;
                     } catch (Exception e) {
                         e.printStackTrace();
-                        //disconnectFromServer();
                     }
-
 
                     if (message != null) {
                         String[] message_parts = message.split("%");
@@ -83,7 +77,7 @@ public class Client {
                                 isConnected = true;
                                 syncPort = Integer.parseInt(message_parts[1]);
                                 serverSyncAddress = new InetSocketAddress(serverAddress.getAddress(), syncPort);
-                                connected();
+                                connected(); //uruchamia wątek nasłuchujący i synchronizujący
                                 break;
                             }
                         }
@@ -91,11 +85,10 @@ public class Client {
 
                 }
                 if (!isConnected) {
-                    disconnectFromServer();
+                    disconnectFromServer(); //zwalnia gniazdo sieciowe
                 }
             }
         }).start();
-
     }
 
     private void connected() {
@@ -134,7 +127,8 @@ public class Client {
                         if (message_parts.length > 1) {
                             if (message_parts[0].equals("photo")) {
                                 long targetTimestamp = Long.parseLong(message_parts[1]) + avgDeltaTimestamp;
-                                service.callbacks.takePictureRequest(targetTimestamp - System.currentTimeMillis());
+                               // service.callbacks.takePictureRequest((targetTimestamp - System.nanoTime())/1000000);
+                                service.callbacks.takePictureRequest(targetTimestamp);
                             }
                         }
                     } catch (SocketTimeoutException e) {
@@ -179,14 +173,15 @@ public class Client {
                     start = System.nanoTime();
                     syncSocket.send(packet);
                     syncSocket.receive(packet);
-                    long stop2 = System.currentTimeMillis();
+                    //long stop2 = System.currentTimeMillis();
                     stop = System.nanoTime();
-                    long delay = ((stop - start) / 2) / 1000000;
+                    long delay = ((stop - start) / 2);
                     buffer = ByteBuffer.wrap(packet.getData(), 0, packet.getLength());
                     serverTimestamp = buffer.getLong();
+                    long tim = serverTimestamp;
                     //avgDeltaTimestamp = stop2 - (serverTimestamp + delay);
 
-                    deltaTimestamps.addLast(stop2 - (serverTimestamp + delay));
+                    deltaTimestamps.addLast(stop - (serverTimestamp + delay));
                     if (deltaTimestamps.size() > 25) {
                         deltaTimestamps.pollFirst();
                     }
