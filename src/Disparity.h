@@ -29,6 +29,45 @@ public:
     int minDisparity, numDisparity, blockSize, P1, P2, disp12MaxDiff, preFilterCap, uniquenessRatio,
         speckleWindowSize, speckleRange, mode;
 
+	int filterType;
+
+	double wlsLambda, wlsSigma, fbsSpatial, fbsLuma, fbsChroma, fbsLambda;
+
+	void setFilterType(int filter_type)
+	{
+		filterType = filter_type;
+	}
+
+	void setWlsLambda(double wls_lambda)
+	{
+		wlsLambda = wls_lambda;
+	}
+
+	void setWlsSigma(double wls_sigma)
+	{
+		wlsSigma = wls_sigma;
+	}
+
+	void setFbsSpatial(double fbs_spatial)
+	{
+		fbsSpatial = fbs_spatial;
+	}
+
+	void setFbsLuma(double fbs_luma)
+	{
+		fbsLuma = fbs_luma;
+	}
+
+	void setFbsChroma(double fbs_chroma)
+	{
+		fbsChroma = fbs_chroma;
+	}
+
+	void setFbsLambda(double fbs_lambda)
+	{
+		fbsLambda = fbs_lambda;
+	}
+
     void setMatcher()
     {
         left_matcher->setMinDisparity(minDisparity);

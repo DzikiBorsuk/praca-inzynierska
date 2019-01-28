@@ -30,7 +30,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>3</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="tab_calibration">
        <attribute name="title">
@@ -181,7 +181,7 @@
           <item row="1" column="5" colspan="2">
            <widget class="QLabel" name="label_avgRepError_value">
             <property name="text">
-             <string>value</string>
+             <string/>
             </property>
            </widget>
           </item>
@@ -692,20 +692,6 @@
           <layout class="QHBoxLayout" name="horizontalLayout">
            <item>
             <layout class="QGridLayout" name="layout_disparity">
-             <item row="2" column="1">
-              <widget class="QSlider" name="slider_blockSize">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-              </widget>
-             </item>
-             <item row="12" column="0">
-              <widget class="QLabel" name="label_filter">
-               <property name="text">
-                <string>Disparity filter</string>
-               </property>
-              </widget>
-             </item>
              <item row="3" column="1">
               <widget class="QSlider" name="slider_P1">
                <property name="orientation">
@@ -713,45 +699,40 @@
                </property>
               </widget>
              </item>
-             <item row="1" column="0">
-              <widget class="QLabel" name="label_maxDisparity">
+             <item row="22" column="1">
+              <spacer name="verticalSpacer_4">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_minDisparity">
                <property name="text">
-                <string>Max disparity</string>
+                <string>Min disparity</string>
                </property>
               </widget>
              </item>
-             <item row="6" column="2">
-              <widget class="QLabel" name="label_preFilterCap_value">
-               <property name="text">
-                <string>TextLabel</string>
+             <item row="18" column="1">
+              <widget class="QSlider" name="slider_fbsSpatial">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
                </property>
               </widget>
              </item>
-             <item row="4" column="0">
-              <widget class="QLabel" name="label_P2">
-               <property name="text">
-                <string>P2</string>
-               </property>
-              </widget>
+             <item row="12" column="1">
+              <widget class="QComboBox" name="comboBox_colormap"/>
              </item>
-             <item row="2" column="0">
-              <widget class="QLabel" name="label_blockSize">
-               <property name="text">
-                <string>Block size</string>
-               </property>
-              </widget>
-             </item>
-             <item row="8" column="2">
-              <widget class="QLabel" name="label_speckleWindowSize_value">
-               <property name="text">
-                <string>TextLabel</string>
-               </property>
-              </widget>
-             </item>
-             <item row="6" column="0">
-              <widget class="QLabel" name="label_preFilterCap">
-               <property name="text">
-                <string>preFilterCap</string>
+             <item row="2" column="1">
+              <widget class="QSlider" name="slider_blockSize">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
                </property>
               </widget>
              </item>
@@ -762,29 +743,43 @@
                </property>
               </widget>
              </item>
-             <item row="1" column="1">
-              <widget class="QSlider" name="slider_maxDisparity">
+             <item row="11" column="2">
+              <widget class="QLabel" name="label_contrast_value">
+               <property name="text">
+                <string>1000</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="2">
+              <widget class="QLabel" name="label_blockSize_value">
+               <property name="text">
+                <string>3</string>
+               </property>
+              </widget>
+             </item>
+             <item row="21" column="1">
+              <widget class="QSlider" name="slider_fbsLambda">
                <property name="orientation">
                 <enum>Qt::Horizontal</enum>
                </property>
               </widget>
              </item>
-             <item row="4" column="2">
-              <widget class="QLabel" name="label_P2_value">
-               <property name="text">
-                <string>TextLabel</string>
+             <item row="20" column="1">
+              <widget class="QSlider" name="slider_fbsChroma">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
                </property>
               </widget>
              </item>
-             <item row="9" column="2">
-              <widget class="QLabel" name="label_speckleRange_value">
-               <property name="text">
-                <string>TextLabel</string>
+             <item row="9" column="1">
+              <widget class="QSlider" name="slider_speckleRange">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
                </property>
               </widget>
              </item>
-             <item row="10" column="1">
-              <widget class="QSlider" name="slider_previewContrast">
+             <item row="1" column="1">
+              <widget class="QSlider" name="slider_maxDisparity">
                <property name="orientation">
                 <enum>Qt::Horizontal</enum>
                </property>
@@ -797,29 +792,29 @@
                </property>
               </widget>
              </item>
-             <item row="10" column="0">
-              <widget class="QLabel" name="label_previewContrast">
-               <property name="text">
-                <string>Preview contrast</string>
+             <item row="0" column="1">
+              <widget class="QSlider" name="slider_minDisparity">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
                </property>
               </widget>
              </item>
-             <item row="8" column="0">
-              <widget class="QLabel" name="label_speckleWindowSize">
+             <item row="7" column="0">
+              <widget class="QLabel" name="label_uniquenessRatio">
                <property name="text">
-                <string>speckleWindowSize</string>
+                <string>uniquenessRatio</string>
                </property>
               </widget>
              </item>
-             <item row="2" column="2">
-              <widget class="QLabel" name="label_blockSize_value">
+             <item row="8" column="2">
+              <widget class="QLabel" name="label_speckleWindowSize_value">
                <property name="text">
                 <string>TextLabel</string>
                </property>
               </widget>
              </item>
-             <item row="11" column="1">
-              <widget class="QSlider" name="slider_contrast">
+             <item row="7" column="1">
+              <widget class="QSlider" name="slider_uniquenessRatio">
                <property name="orientation">
                 <enum>Qt::Horizontal</enum>
                </property>
@@ -832,24 +827,149 @@
                </property>
               </widget>
              </item>
-             <item row="11" column="2">
-              <widget class="QLabel" name="label_contrast_value">
-               <property name="text">
-                <string>TextLabel</string>
+             <item row="16" column="1">
+              <widget class="QSlider" name="slider_wlsLambda">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
                </property>
               </widget>
              </item>
              <item row="10" column="2">
               <widget class="QLabel" name="label_previewContrast_value">
                <property name="text">
-                <string>TextLabel</string>
+                <string>1000</string>
                </property>
               </widget>
              </item>
-             <item row="0" column="0">
-              <widget class="QLabel" name="label_minDisparity">
+             <item row="12" column="0">
+              <widget class="QLabel" name="label_colormap">
                <property name="text">
-                <string>Min disparity</string>
+                <string>Colormap</string>
+               </property>
+              </widget>
+             </item>
+             <item row="19" column="1">
+              <widget class="QSlider" name="slider_fbsLuma">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+              </widget>
+             </item>
+             <item row="10" column="1">
+              <widget class="QSlider" name="slider_previewContrast">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="2">
+              <widget class="QLabel" name="label_P2_value">
+               <property name="text">
+                <string>0</string>
+               </property>
+              </widget>
+             </item>
+             <item row="9" column="2">
+              <widget class="QLabel" name="label_speckleRange_value">
+               <property name="text">
+                <string>0</string>
+               </property>
+              </widget>
+             </item>
+             <item row="10" column="0">
+              <widget class="QLabel" name="label_previewContrast">
+               <property name="text">
+                <string>Preview contrast</string>
+               </property>
+              </widget>
+             </item>
+             <item row="20" column="0">
+              <widget class="QLabel" name="label_12">
+               <property name="text">
+                <string>fbs chroma</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_maxDisparity">
+               <property name="text">
+                <string>Max disparity</string>
+               </property>
+              </widget>
+             </item>
+             <item row="21" column="0">
+              <widget class="QLabel" name="label_13">
+               <property name="text">
+                <string>fbs lambda</string>
+               </property>
+              </widget>
+             </item>
+             <item row="14" column="1">
+              <widget class="QCheckBox" name="checkBox_disparityFilter">
+               <property name="text">
+                <string/>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="6" column="1">
+              <widget class="QSlider" name="slider_preFilterCap">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="1">
+              <widget class="QSlider" name="slider_disp12MaxDiff">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+              </widget>
+             </item>
+             <item row="17" column="1">
+              <widget class="QSlider" name="slider_wlsSigma">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+              </widget>
+             </item>
+             <item row="11" column="0">
+              <widget class="QLabel" name="label_contrast">
+               <property name="text">
+                <string>Contrast</string>
+               </property>
+              </widget>
+             </item>
+             <item row="17" column="0">
+              <widget class="QLabel" name="label_9">
+               <property name="text">
+                <string>wls sigma</string>
+               </property>
+              </widget>
+             </item>
+             <item row="11" column="1">
+              <widget class="QSlider" name="slider_contrast">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+              </widget>
+             </item>
+             <item row="19" column="0">
+              <widget class="QLabel" name="label_11">
+               <property name="text">
+                <string>fbs luma</string>
+               </property>
+              </widget>
+             </item>
+             <item row="15" column="1">
+              <widget class="QComboBox" name="comboBox_filterType"/>
+             </item>
+             <item row="18" column="0">
+              <widget class="QLabel" name="label_10">
+               <property name="text">
+                <string>fbs spatial</string>
                </property>
               </widget>
              </item>
@@ -860,10 +980,17 @@
                </property>
               </widget>
              </item>
-             <item row="7" column="1">
-              <widget class="QSlider" name="slider_uniquenessRatio">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
+             <item row="4" column="0">
+              <widget class="QLabel" name="label_P2">
+               <property name="text">
+                <string>P2</string>
+               </property>
+              </widget>
+             </item>
+             <item row="9" column="0">
+              <widget class="QLabel" name="label_speckleRange">
+               <property name="text">
+                <string>speckleRange</string>
                </property>
               </widget>
              </item>
@@ -880,22 +1007,49 @@
                </property>
               </widget>
              </item>
-             <item row="8" column="1">
-              <widget class="QSlider" name="slider_speckleWindowSize">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
+             <item row="6" column="2">
+              <widget class="QLabel" name="label_preFilterCap_value">
+               <property name="text">
+                <string>0</string>
                </property>
               </widget>
              </item>
-             <item row="12" column="1">
-              <widget class="QCheckBox" name="checkBox_disparityFilter">
+             <item row="6" column="0">
+              <widget class="QLabel" name="label_preFilterCap">
                <property name="text">
-                <string/>
-               </property>
-               <property name="checked">
-                <bool>true</bool>
+                <string>preFilterCap</string>
                </property>
               </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QLabel" name="label_blockSize">
+               <property name="text">
+                <string>Block size</string>
+               </property>
+              </widget>
+             </item>
+             <item row="14" column="0">
+              <widget class="QLabel" name="label_filter">
+               <property name="text">
+                <string>Disparity filter</string>
+               </property>
+              </widget>
+             </item>
+             <item row="13" column="1">
+              <spacer name="verticalSpacer_3">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeType">
+                <enum>QSizePolicy::Fixed</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
              </item>
              <item row="7" column="2">
               <widget class="QLabel" name="label_uniquenessRatio_value">
@@ -904,7 +1058,7 @@
                </property>
               </widget>
              </item>
-             <item row="14" column="1">
+             <item row="23" column="1">
               <spacer name="verticalSpacer_2">
                <property name="orientation">
                 <enum>Qt::Vertical</enum>
@@ -917,10 +1071,17 @@
                </property>
               </spacer>
              </item>
-             <item row="5" column="1">
-              <widget class="QSlider" name="slider_disp12MaxDiff">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
+             <item row="3" column="0">
+              <widget class="QLabel" name="label_P1">
+               <property name="text">
+                <string>P1</string>
+               </property>
+              </widget>
+             </item>
+             <item row="8" column="0">
+              <widget class="QLabel" name="label_speckleWindowSize">
+               <property name="text">
+                <string>speckleWindowSize</string>
                </property>
               </widget>
              </item>
@@ -931,64 +1092,68 @@
                </property>
               </widget>
              </item>
-             <item row="6" column="1">
-              <widget class="QSlider" name="slider_preFilterCap">
+             <item row="15" column="0">
+              <widget class="QLabel" name="label_filterType">
+               <property name="text">
+                <string>Filter</string>
+               </property>
+              </widget>
+             </item>
+             <item row="8" column="1">
+              <widget class="QSlider" name="slider_speckleWindowSize">
                <property name="orientation">
                 <enum>Qt::Horizontal</enum>
                </property>
               </widget>
              </item>
-             <item row="7" column="0">
-              <widget class="QLabel" name="label_uniquenessRatio">
+             <item row="16" column="0">
+              <widget class="QLabel" name="label_wls_lambda">
                <property name="text">
-                <string>uniquenessRatio</string>
+                <string>wls lambda</string>
                </property>
               </widget>
              </item>
-             <item row="9" column="0">
-              <widget class="QLabel" name="label_speckleRange">
+             <item row="16" column="2">
+              <widget class="QLabel" name="label_wlsLambda_value">
                <property name="text">
-                <string>speckleRange</string>
+                <string>8000</string>
                </property>
               </widget>
              </item>
-             <item row="11" column="0">
-              <widget class="QLabel" name="label_contrast">
+             <item row="17" column="2">
+              <widget class="QLabel" name="label_wlsSigma_value">
                <property name="text">
-                <string>Contrast</string>
+                <string>1.5</string>
                </property>
               </widget>
              </item>
-             <item row="9" column="1">
-              <widget class="QSlider" name="slider_speckleRange">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="0">
-              <widget class="QLabel" name="label_P1">
+             <item row="18" column="2">
+              <widget class="QLabel" name="label_fbsSpatial_value">
                <property name="text">
-                <string>P1</string>
+                <string>16</string>
                </property>
               </widget>
              </item>
-             <item row="0" column="1">
-              <widget class="QSlider" name="slider_minDisparity">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-              </widget>
-             </item>
-             <item row="13" column="0">
-              <widget class="QLabel" name="label_colormap">
+             <item row="19" column="2">
+              <widget class="QLabel" name="label_fbsLuma_value">
                <property name="text">
-                <string>Colormap</string>
+                <string>8</string>
                </property>
               </widget>
              </item>
-             <item row="13" column="1">
-              <widget class="QComboBox" name="comboBox_colormap"/>
+             <item row="20" column="2">
+              <widget class="QLabel" name="label_fbsChroma_value">
+               <property name="text">
+                <string>8</string>
+               </property>
+              </widget>
+             </item>
+             <item row="21" column="2">
+              <widget class="QLabel" name="label_fbsLambda_value">
+               <property name="text">
+                <string>128</string>
+               </property>
+              </widget>
              </item>
             </layout>
            </item>
@@ -1061,9 +1226,16 @@
      </property>
      <addaction name="actionSave_rectified_images"/>
     </widget>
+    <widget class="QMenu" name="menuDisparity">
+     <property name="title">
+      <string>Disparity</string>
+     </property>
+     <addaction name="actionSave_disparity"/>
+    </widget>
     <addaction name="menuLoad"/>
     <addaction name="menuCalibration"/>
     <addaction name="menuRectification"/>
+    <addaction name="menuDisparity"/>
    </widget>
    <widget class="QMenu" name="menuOpitons">
     <property name="title">
@@ -1131,6 +1303,16 @@
   <action name="actionSave_rectified_images">
    <property name="text">
     <string>Save rectified images</string>
+   </property>
+  </action>
+  <action name="actionEqualize_images">
+   <property name="text">
+    <string>Equalize images</string>
+   </property>
+  </action>
+  <action name="actionSave_disparity">
+   <property name="text">
+    <string>Save disparity</string>
    </property>
   </action>
  </widget>

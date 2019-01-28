@@ -30,6 +30,7 @@ import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
+import android.view.KeyEvent;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.WindowManager;
@@ -128,6 +129,15 @@ public class MainActivity extends AppCompatActivity implements ServiceCallbacks 
         //tv.setText(stringFromJNI());
     }
 
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if ((keyCode == KeyEvent.KEYCODE_VOLUME_DOWN)){
+            mService.sendTakePictureReqsuest();
+            //new Handler().postDelayed(() -> cameraFragment.takePictureImmediately(), 150);
+            takePictureRequest(500+120);
+        }
+        return true;
+    }
 
     @Override
     protected void onStart() {

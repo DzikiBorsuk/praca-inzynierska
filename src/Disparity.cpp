@@ -17,6 +17,13 @@ Disparity::Disparity()
 	left_matcher = cv::StereoSGBM::create();
 	right_matcher = cv::ximgproc::createRightMatcher(left_matcher);
 	contrast = 1;
+	filterType = 0;
+	wlsLambda = 8000;
+	wlsSigma = 1.5;
+	fbsSpatial = 16;
+	fbsLuma = 8;
+	fbsChroma = 8;
+	fbsLambda = 128;
 }
 
 void Disparity::initSGBM(int _minDisparity,
@@ -49,9 +56,15 @@ void Disparity::initImages(const cv::Mat& left, const cv::Mat& right)
 {
 	//this->left_image = left.clone();
 	//this->right_image = right.clone();
+	cv::Mat temp_left, temp_right;
+	cv::cvtColor(left, temp_left, cv::COLOR_BGR2GRAY);
+	cv::cvtColor(right, temp_right, cv::COLOR_BGR2GRAY);
+
+	//cv::equalizeHist(temp_left, temp_left);
+	//cv::equalizeHist(temp_right, temp_right);
 	double scale = 1.0 * 800 / left.size().width;
-	cv::resize(left, left_image, cv::Size(), scale, scale);
-	cv::resize(right, right_image, cv::Size(), scale, scale);
+	cv::resize(temp_left, left_image, cv::Size(), scale, scale);
+	cv::resize(temp_right, right_image, cv::Size(), scale, scale);
 }
 
 
@@ -61,8 +74,6 @@ Disparity::~Disparity()
 void Disparity::SGBM()
 {
 	setMatcher();
-
-
 
 
 	// left_matcher->setMinDisparity(-16);
@@ -79,6 +90,15 @@ void Disparity::SGBM()
 	left_matcher->compute(left_image, right_image, left_disp);
 	right_matcher->compute(right_image, left_image, right_disp);
 
+	cv::ximgproc::getDisparityVis(left_disp, vis_left, contrast);
+	cv::ximgproc::getDisparityVis(right_disp, vis_right, -contrast);
+
+	// cv::normalize(left_disp, left_disp, 32767, -32768, cv::NORM_MINMAX);
+	// cv::normalize(right_disp, right_disp, 32767, -32768, cv::NORM_MINMAX);
+	//
+	// cv::normalize(vis_left, vis_left, 255, 0, cv::NORM_MINMAX);
+	// cv::normalize(vis_right, vis_right, 255, 0, cv::NORM_MINMAX);
+
 	std::cout << "disp_finish" << std::endl;
 	wls_filter = cv::ximgproc::createDisparityWLSFilter(left_matcher);
 
@@ -88,13 +108,39 @@ void Disparity::SGBM()
 
 void Disparity::filterDisparity()
 {
-	float lambda = 8000.f;
-	float sigma = 1.5f;
+	// float lambda = 8000.f;
+	// float sigma = 1.5f;
 
-	wls_filter->setLambda(lambda);
-	wls_filter->setSigmaColor(sigma);
+	if (!left_image.empty() && !right_image.empty())
+	{
+		wls_filter->setLambda(wlsLambda);
+		wls_filter->setSigmaColor(wlsSigma);
 
-	wls_filter->filter(left_disp, left_image, filtered_disp, right_disp, cv::Rect(), right_image);
+		if (filterType == 0)
+		{
+			wls_filter->filter(left_disp, left_image, filtered_disp, right_disp, cv::Rect(), right_image);
+		}
+		else if (filterType == 1)
+		{
+			wls_filter->filter(left_disp, left_image, filtered_disp, right_disp, cv::Rect(), right_image);
+
+			//fastBilateralSolverFilter(std::left, left_disp_resized, conf_map / 255.0f, solved_disp, fbs_spatial, fbs_luma, fbs_chroma, fbs_lambda);
+			cv::ximgproc::fastBilateralSolverFilter(left_image, left_disp, wls_filter->getConfidenceMap(),
+			                                        filtered_disp, fbsSpatial, fbsLuma, fbsChroma, fbsLambda);
+		}
+		else
+		{
+			wls_filter->filter(left_disp, left_image, filtered_disp, right_disp, cv::Rect(), right_image);
+			cv::Mat temp = filtered_disp.clone();
+			cv::ximgproc::fastBilateralSolverFilter(left_image, temp, wls_filter->getConfidenceMap(), filtered_disp,
+			                                        fbsSpatial, fbsLuma, fbsChroma, fbsLambda);
+		}
+	}
+
+
+	//cv::ximgproc::getDisparityVis(filtered_disp, vis_filter, contrast);
+
+	//cv::normalize(vis_filter, vis_filter, 255, 0, cv::NORM_MINMAX);
 
 	//cv::ximgproc::getDisparityVis(filtered_disp, vis_filter, contrast);
 
@@ -106,6 +152,7 @@ const cv::Mat& Disparity::getDisparity(int color)
 	if (!left_disp.empty())
 	{
 		cv::ximgproc::getDisparityVis(left_disp, vis_left, contrast);
+		cv::normalize(vis_left, vis_left, 255, 0, cv::NORM_MINMAX);
 		if (color > 0 && color <= 12)
 		{
 			cv::applyColorMap(vis_left, vis_left, color);
@@ -119,6 +166,7 @@ const cv::Mat& Disparity::getDisparityFiltered(int color)
 	if (!filtered_disp.empty())
 	{
 		cv::ximgproc::getDisparityVis(filtered_disp, vis_filter, contrast);
+		cv::normalize(vis_filter, vis_filter, 255, 0, cv::NORM_MINMAX);
 		if (color > 0 && color <= 12)
 		{
 			cv::applyColorMap(vis_filter, vis_filter, color);

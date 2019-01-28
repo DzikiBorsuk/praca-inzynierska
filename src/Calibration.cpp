@@ -39,8 +39,14 @@ void Calibration::loadParams(const std::string &filename)
     cv::FileStorage fs;
     fs.open(filename, cv::FileStorage::READ);
     fs["camera_matrix"] >> cameraMatrix;
+    fs["camera_matrix_undistorted"] >> cameraMatrixAfterUndistortion;
     fs["distortion_coefficients"] >> distortionCoefficient;
     fs.release();
+
+	if(cameraMatrixAfterUndistortion.empty())
+	{
+		cameraMatrixAfterUndistortion = cameraMatrix.clone();
+	}
 }
 
 void Calibration::saveParams(const std::string &filename)
@@ -105,7 +111,7 @@ void Calibration::findCalibrationPoints(const cv::Size &pattern_size,
 
 void Calibration::calibrateCamera(int flags)
 {
-	flags = cv::CALIB_ZERO_TANGENT_DIST | cv::CALIB_FIX_K1 | cv::CALIB_FIX_K2 | cv::CALIB_FIX_K3 | cv::CALIB_FIX_K4 | cv::CALIB_FIX_K5 | cv::CALIB_FIX_K6;
+    //flags = cv::CALIB_ZERO_TANGENT_DIST | cv::CALIB_FIX_K1 | cv::CALIB_FIX_K2 | cv::CALIB_FIX_K3 | cv::CALIB_FIX_K4 | cv::CALIB_FIX_K5 | cv::CALIB_FIX_K6;
 
     std::vector<std::vector<cv::Point2f>> foundCorners;
     std::vector<std::vector<cv::Point3f>> foundRealCorners;
@@ -160,9 +166,9 @@ void Calibration::calibrateUndistortedCamera(int flags)
 		rvecArray,
 		tvecArray, flags | cv::CALIB_ZERO_TANGENT_DIST | cv::CALIB_FIX_K1 | cv::CALIB_FIX_K2 | cv::CALIB_FIX_K3 | cv::CALIB_FIX_K4 | cv::CALIB_FIX_K5 | cv::CALIB_FIX_K6);
 
-    cv::Mat newCam = cv::getOptimalNewCameraMatrix(cameraMatrix, distortionCoefficient, imagesArray[0].size(), 0.5);
-std::cout << "M = "<< std::endl << " "  << cameraMatrixAfterUndistortion/2 << std::endl << std::endl;
-std::cout << "M = "<< std::endl << " "  << newCam << std::endl << std::endl;
+//     cv::Mat newCam = cv::getOptimalNewCameraMatrix(cameraMatrix, distortionCoefficient, imagesArray[0].size(), 0.5);
+// std::cout << "M = "<< std::endl << " "  << cameraMatrixAfterUndistortion/2 << std::endl << std::endl;
+// std::cout << "M = "<< std::endl << " "  << newCam << std::endl << std::endl;
 
 }
 

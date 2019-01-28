@@ -87,6 +87,12 @@ private slots:
 
     void on_comboBox_colormap_currentIndexChanged(int index);
 
+    void on_actionEqualize_images_triggered();
+
+    void on_actionSave_disparity_triggered();
+
+    void on_comboBox_filterType_currentIndexChanged(int index);
+
 private:
     Ui::MainWindow *ui;
 
@@ -129,7 +135,10 @@ private:
 
     void compute_disp_init();
     //void compute_disp();
+
+    void disparity_filter();
     void show_disparity();
+
 
     void init_disparity_tab();
 

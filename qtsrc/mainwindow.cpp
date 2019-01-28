@@ -101,6 +101,26 @@ void MainWindow::on_actionRight_image_triggered()
     }
 }
 
+void MainWindow::on_actionEqualize_images_triggered()
+{
+    this->stereo.equalizeImages();
+    show_matchedFeatures();
+}
+
+void MainWindow::on_actionSave_disparity_triggered()
+{
+    QString OutputFolder = QFileDialog::getExistingDirectory(this, ("Select Output Folder"), QDir::currentPath());
+
+    if(!OutputFolder.isEmpty())
+    {
+        std::string path = OutputFolder.toUtf8().constData();
+        cv::imwrite(path+"/diparity.png",stereo.disp.getDisparity());
+        cv::imwrite(path+"/diparity_filtered.png",stereo.disp.getDisparityFiltered());
+
+    }
+}
+
+
 //###################################################### calibration tab ######################################################
 
 void MainWindow::init_calibration_tab()
@@ -314,9 +334,11 @@ void MainWindow::init_feature_matching_tab()
 
     QStringList detectorsList = (QStringList() << "SIFT" << "SURF" << "ORB" << "AKAZE" << "KAZE" << "BRISK");
     ui->comboBox_detector->addItems(detectorsList);
+    ui->comboBox_detector->setCurrentIndex(1);
 
     QStringList descriptorsList = (QStringList() << "SIFT" << "SURF" << "ORB" << "AKAZE" << "KAZE" << "BRISK");
     ui->comboBox_descriptor->addItems(descriptorsList);
+    ui->comboBox_descriptor->setCurrentIndex(1);
 
     QStringList matchersList = (QStringList() << "FlannBased" << "BruteForce" << "BrueForce-L1" << "BruteForce-Hamming"
                                               << "BruteForce-Hamming(2)");
@@ -538,7 +560,7 @@ void MainWindow::init_rectification_tab()
     ui->label_rectificationLeftImage->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
     ui->label_rectificationRightImage->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
 
-    QStringList rectificationMethods = (QStringList() << "Loop-Zhang" << "Hartley" << "DSR"<<"Pose estimation");
+    QStringList rectificationMethods = (QStringList() << "Hartley Undistorted" << "Hartley" << "DSR"<<"Pose estimation"<<"None");
     ui->comboBox_rectificationMethod->addItems(rectificationMethods);
 
     QStringList rejectionMethods = (QStringList() << "RANSAC" << "LMEDS" << "RHO" << "None");
@@ -644,10 +666,14 @@ void MainWindow::image_rectification_finished(const QString &msg)
 
     this->ui->label_status->setText(msg);
 
+    this->ui->label_rectificationAvgError_value->setNum(stereo.rect.getRms_error());
+    this->ui->label_rectificationMaxError_value->setNum(stereo.rect.getMax_error());
+    this->ui->label_rectificationMinError_value->setNum(stereo.rect.getMin_error());
+
     this->ui->pushButton_runRectification->setDisabled(false);
     this->ui->label_showRectified->setDisabled(false);
     this->ui->checkBox_showRectified->setDisabled(false);
-    this->ui->checkBox_showRectified->setChecked(true);
+    this->ui->checkBox_showRectified->setChecked(true);   
     this->show_rectified_images();
 }
 
@@ -670,12 +696,30 @@ void MainWindow::init_disparity_tab()
     ui->slider_previewContrast->setRange(0,5000);
     ui->slider_contrast->setRange(0,5000);
 
-    ui->slider_previewContrast->setValue(1000);
+    ui->slider_wlsLambda->setRange(0,20000);
+    ui->slider_wlsLambda->setValue(8000);
+    ui->slider_wlsSigma->setRange(0,100);
+    ui->slider_wlsSigma->setValue(15);
+    ui->slider_fbsSpatial->setRange(0,100);
+    ui->slider_fbsSpatial->setValue(16);
+    ui->slider_fbsLuma->setRange(0,50);
+    ui->slider_fbsLuma->setValue(8);
+    ui->slider_fbsChroma->setRange(0,50);
+    ui->slider_fbsChroma->setValue(8);
+    ui->slider_fbsLambda->setRange(0,1000);
+    ui->slider_fbsLambda->setValue(128);
+
 
 
     QStringList colormapOptions = (QStringList() <<"None"<< "Autumn" << "Bone" << "Jet"<<"Winter"<<"Rainbow"<<"Ocean"<<"Summer"<<"Spring"<<"Cool"<<"HSV"<<"Pink"<<"Hot"<<"Parula");
     ui->comboBox_colormap->addItems(colormapOptions);
     ui->comboBox_colormap->setCurrentIndex(2);
+
+    QStringList filterOptions = (QStringList() <<"WLS"<<"FBS"<<"WLS+FBS");
+    ui->comboBox_filterType->addItems(filterOptions);
+    ui->comboBox_filterType->setCurrentIndex(0);
+
+
 
 
     QListIterator < QObject * > i(ui->frame_disparity->children());
@@ -813,12 +857,55 @@ void MainWindow::on_slider_moved(int position)
         int value = position;
 
         stereo.disp.setContrast(1.0*value/1000);
+        ui->label_previewContrast_value->setNum(value);
         this->show_disparity();
         return;
     }
     else if(obj == ui->slider_contrast)
     {
 
+    }
+    else if(obj == ui->slider_wlsLambda)
+    {
+        stereo.disp.setWlsLambda(position);
+        ui->label_wlsLambda_value->setNum(position);
+        disparity_filter();
+        return;
+    }
+    else if(obj == ui->slider_wlsSigma)
+    {
+        stereo.disp.setWlsSigma(position/10.0);
+        ui->label_wlsSigma_value->setNum(position/10.0);
+        disparity_filter();
+        return;
+    }
+    else if(obj == ui->slider_fbsLuma)
+    {
+        stereo.disp.setFbsLuma(position);
+        ui->label_fbsLuma_value->setNum(position);
+        disparity_filter();
+        return;
+    }
+    else if(obj == ui->slider_fbsChroma)
+    {
+        stereo.disp.setFbsChroma(position);
+        ui->label_fbsChroma_value->setNum(position);
+        disparity_filter();
+        return;
+    }
+    else if(obj == ui->slider_fbsLambda)
+    {
+        stereo.disp.setFbsLambda(position);
+        ui->label_fbsLambda_value->setNum(position);
+        disparity_filter();
+        return;
+    }
+    else if(obj == ui->slider_fbsSpatial)
+    {
+        stereo.disp.setFbsSpatial(position);
+        ui->label_fbsSpatial_value->setNum(position);
+        disparity_filter();
+        return;
     }
 
     compute_disp_init();
@@ -841,6 +928,7 @@ void MainWindow::compute_disp_init()
         is_computing_disparity = true;
         compute_disparity = false;
         QMetaObject::invokeMethod( worker, "computeDisparity",Q_ARG(Stereo*, &stereo));
+        this->ui->label_status->setText("Computing disparity");
         //std::thread disparityThread(compute_disp, this);
         //disparityThread.join();
         //disparityThread.detach();
@@ -850,6 +938,12 @@ void MainWindow::compute_disp_init()
         compute_disparity = true;
     }
 
+}
+
+void MainWindow::disparity_filter()
+{
+    stereo.disp.filterDisparity();
+    show_disparity();
 }
 
 void MainWindow::compute_disparity_finished(const QString& msg)
@@ -919,3 +1013,9 @@ void MainWindow::show_disparity()
     }
 }
 
+void MainWindow::on_comboBox_filterType_currentIndexChanged(int index)
+{
+    stereo.disp.setFilterType(index);
+    disparity_filter();
+    show_disparity();
+}

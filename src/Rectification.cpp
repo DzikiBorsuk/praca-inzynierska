@@ -8,6 +8,8 @@
 #include <iostream>
 #include <vector>
 #include <type_traits>
+#include <opencv2/dnn/dnn.hpp>
+#include <opencv2/stitching/detail/util_inl.hpp>
 
 
 Rectification::Rectification()
@@ -23,7 +25,6 @@ void Rectification::setPoints(const std::vector<cv::Point2f>& left_points, const
 	rightPoints = right_points;
 	leftFilteredPoints = left_points;
 	rightFilteredPoints = right_points;
-
 }
 
 void Rectification::setPoints(const std::vector<cv::Point2f>& left_points,
@@ -40,7 +41,6 @@ void Rectification::rejectOutliers(int method, double threshold, double confiden
 	rejection_iterations = iterations;
 	cv::Mat f;
 	//std::vector<int> inliers;
-	cv::Mat inliers;
 	switch (method)
 	{
 	case RejectionMethod::RANSAC:
@@ -52,9 +52,9 @@ void Rectification::rejectOutliers(int method, double threshold, double confiden
 		//                    iterations,
 		//                    confidence);
 
-	
 
-		f = cv::findFundamentalMat(leftPoints, rightPoints, cv::FM_RANSAC, rejection_threshold, rejection_confidence,inliers);
+		f = cv::findFundamentalMat(leftPoints, rightPoints, cv::FM_RANSAC, rejection_threshold, rejection_confidence,
+		                           inliers);
 
 		break;
 	case RejectionMethod::LMEDS:
@@ -67,7 +67,7 @@ void Rectification::rejectOutliers(int method, double threshold, double confiden
 		                   confidence);
 
 		break;
-	default: 
+	default:
 		//inliers.push_back(1);
 		//inliers.resize(leftPoints.size(), inliers[0]);
 		break;
@@ -99,9 +99,9 @@ void Rectification::rectifyImages(int method, const cv::Mat& left_image, const c
 
 	switch (method)
 	{
-	case RectificationMethod::LOOP_ZHANG:
-		this->LoopZhang();
-		rectificationMethod = LOOP_ZHANG;
+	case RectificationMethod::HARTLEY_UNDISTORTED:
+		this->HartleyUndistorted();
+		rectificationMethod = HARTLEY_UNDISTORTED;
 		break;
 	case RectificationMethod::HARTLEY:
 		this->Hartley();
@@ -115,6 +115,10 @@ void Rectification::rectifyImages(int method, const cv::Mat& left_image, const c
 		this->PoseEstimationRectification(left_camMatrix, rigth_camMatrix);
 		rectificationMethod = POSE_ESTIMATION;
 		break;
+    case RectificationMethod::NONE:
+        cv::undistort(left_image,rectImageLeft,left_camMatrix,left_distCoeff);
+        cv::undistort(right_image,rectImageRight,rigth_camMatrix,right_distCoeff);
+        return;
 	}
 
 	warp_image(left_image, left_camMatrix, left_distCoeff, right_image, rigth_camMatrix, right_distCoeff);
@@ -152,6 +156,11 @@ void Rectification::warp_image(const cv::Mat& left_image, const cv::Mat& left_ca
 
 		remap(left_image, rectImageLeft, rmap[0][0], rmap[0][1], cv::INTER_LINEAR);
 		remap(right_image, rectImageRight, rmap[1][0], rmap[1][1], cv::INTER_LINEAR);
+
+		// cv::flip(rectImageLeft, rectImageLeft, 0);
+		// cv::flip(rectImageRight, rectImageRight, 0);
+		// cv::flip(rectImageLeft, rectImageLeft, 1);
+		// cv::flip(rectImageRight, rectImageRight, 1);
 
 		rectImageLeftSizeCorrection = rectImageLeft;
 		rectImageRightSizeCorrection = rectImageRight;
@@ -244,13 +253,13 @@ void Rectification::warp_image(const cv::Mat& left_image, const cv::Mat& left_ca
 		P2 = right_camMatrix;
 
 
-		cv::initUndistortRectifyMap(left_camMatrix, left_distCoeff, R1, P1,
-		                            newSize, CV_16SC2, rmap[0][0], rmap[0][1]);
-		cv::initUndistortRectifyMap(right_camMatrix, right_distCoeff, R2, P2,
-		                            newSize, CV_16SC2, rmap[1][0], rmap[1][1]);
-
-		remap(left_image, rectImageLeftSizeCorrection, rmap[0][0], rmap[0][1], cv::INTER_LINEAR);
-		remap(right_image, rectImageRightSizeCorrection, rmap[1][0], rmap[1][1], cv::INTER_LINEAR);
+		// cv::initUndistortRectifyMap(left_camMatrix, left_distCoeff, R1, P1,
+		//                             newSize, CV_16SC2, rmap[0][0], rmap[0][1]);
+		// cv::initUndistortRectifyMap(right_camMatrix, right_distCoeff, R2, P2,
+		//                             newSize, CV_16SC2, rmap[1][0], rmap[1][1]);
+		//
+		// remap(left_image, rectImageLeftSizeCorrection, rmap[0][0], rmap[0][1], cv::INTER_LINEAR);
+		// remap(right_image, rectImageRightSizeCorrection, rmap[1][0], rmap[1][1], cv::INTER_LINEAR);
 	}
 
 	leftRotation = R1;
@@ -269,11 +278,12 @@ void Rectification::Hartley()
 	                              homRight);
 }
 
-void Rectification::LoopZhang()
+void Rectification::HartleyUndistorted()
 {
-	//TODO implementacja LoopZhang
+	//TODO implementacja HartleyUndistorted
 
 	cv::Mat fundMatrix = cv::findFundamentalMat(leftFilteredPoints, rightFilteredPoints, cv::FM_8POINT);
+	//cv::Mat fundMatrix = cv::findFundamentalMat(leftPoints, rightPoints, cv::FM_RANSAC, rejection_threshold, rejection_confidence);
 	cv::stereoRectifyUncalibrated(leftFilteredPoints,
 	                              rightFilteredPoints,
 	                              fundMatrix,
@@ -309,7 +319,7 @@ void Rectification::LoopZhang()
 
 void Rectification::DirectSelfRectification()
 {
-	/*
+	
 	//cv::Mat fundMatrix = cv::findFundamentalMat(lk, rk, CV_FM_RANSAC, 1);
 	//    cv::stereoRectifyUncalibrated(lk, rk, fundMatrix, imageLight.size(), homLeft, homRight);
 	//
@@ -330,117 +340,117 @@ void Rectification::DirectSelfRectification()
 	//
 	//    cv::waitKey(0);
 
-//    int ransac_iters = 1000;
-//    int point_pick = 200;
-//
-//    cv::RNG random(static_cast<uint64>(cv::getCPUTickCount()));
-//
-//    std::vector<int> rng_index;
-//    rng_index.reserve(point_pick);
-//
-//    double max_align_rate = 0.f;
-//    double align_rate_earlystop = 0.995;
-//    cv::Mat Hy = cv::Mat::eye(3, 3, CV_64F);
-//    int total_len = leftPoints.size();
-//
-//    for (int i = 0; i < ransac_iters; i++)
-//    {
-//        rng_index.clear();
-//
-//        int j = 0;
-//        while (j < point_pick)
-//        {
-//            int rand_i = random.next() % total_len;
-//            if (std::find(rng_index.begin(), rng_index.end(), rand_i) != rng_index.end())
-//            {
-//                // v contains x
-//            }
-//            else
-//            {
-//                rng_index.push_back(rand_i);
-//                j++;
-//            }
-//        }
-//
-//        cv::Mat A = cv::Mat::zeros(point_pick, 5, CV_64F);
-//
-//        for (int i = 0; i < point_pick; i++)
-//        {
-//            //A(i,:) = [pts2(1, i), pts2(2, i), 1, -1*pts2(1, i)*pts1(2, i), -1*pts2(2, i)*pts1(2, i)];
-//
-//            A.at<double>(i, 0) = rightPoints[rng_index[i]].x;
-//            A.at<double>(i, 1) = rightPoints[rng_index[i]].y;
-//            A.at<double>(i, 2) = 1;
-//            A.at<double>(i, 3) = -1 * rightPoints[rng_index[i]].x * leftPoints[rng_index[i]].y;
-//            A.at<double>(i, 4) = -1 * rightPoints[rng_index[i]].y * leftPoints[rng_index[i]].y;
-//
-//        }
-//
-//        cv::Mat y = cv::Mat::zeros(point_pick, 1, CV_64F);
-//
-//        for (int i = 0; i < point_pick; i++)
-//        {
-//            //A(i,:) = [pts2(1, i), pts2(2, i), 1, -1*pts2(1, i)*pts1(2, i), -1*pts2(2, i)*pts1(2, i)];
-//            y.at<double>(i, 0) = leftPoints[rng_index[i]].y;
-//        }
-//
-//        cv::Mat A_pinv = cv::Mat::zeros(A.size().width, A.size().height, CV_64F);
-//        cv::invert(A, A_pinv, cv::DECOMP_SVD);
-//
-//        cv::Mat H_params = A_pinv * y;
-//
-//        double data[] = {1, 0, 0, H_params.at<double>(0, 0), H_params.at<double>(1, 0), H_params.at<double>(2, 0),
-//                         H_params.at<double>(3, 0), H_params.at<double>(4, 0), 1};
-//
-//        cv::Mat temp_Hy(3, 3, CV_64F, data);
-//
-//        std::vector<cv::Point2f> rk_rng, rk_t;
-//        rk_rng.reserve(point_pick);
-//        rk_t.reserve(point_pick);
-//
-//        for (int i = 0; i < point_pick; i++)
-//        {
-//            rk_rng.push_back(rightPoints[rng_index[i]]);
-//        }
-//
-//
-//        cv::perspectiveTransform(rk_rng, rk_t, temp_Hy);
-//        double error_sum = 0.f;
-//        double threshold_size = 0.f;
-//        for (int i = 0; i < point_pick; i++)
-//        {
-//            double error = abs(leftPoints[rng_index[i]].y - rk_t[i].y);
-//            if (error <= 1)
-//            {
-//                error_sum = error_sum + error;
-//                ++threshold_size;
-//            }
-//        }
-//
-//        if (threshold_size > 0.5f)
-//        {
-//            error_sum = error_sum / threshold_size;
-//        }
-//
-//
-//        //points2_t = htx(Hy, points2);
-//        //errors = abs(points1(2, :) - points2_t(2, :));
-//        //count = ones(size(errors));
-//        //count(errors > threshold) = 0;
-//        //align_rate = sum(count(:)) / double(size(count, 2));
-//
-//        if (error_sum > max_align_rate)
-//        {
-//            max_align_rate = error_sum;
-//            Hy = temp_Hy;
-//        }
-//
-//        if (max_align_rate > align_rate_earlystop)
-//        {
-//            break;
-//        }
-//
-//    }
+ //    int ransac_iters = 1000;
+ //    int point_pick = 200;
+ //
+ //    cv::RNG random(static_cast<uint64>(cv::getCPUTickCount()));
+ //
+ //    std::vector<int> rng_index;
+ //    rng_index.reserve(point_pick);
+ //
+	// double max_align_rate = rejection_threshold;// 0.f;
+ //    double align_rate_earlystop = 0.995;
+ //    cv::Mat Hy = cv::Mat::eye(3, 3, CV_64F);
+ //    int total_len = leftFilteredPoints.size();
+ //
+ //    for (int i = 0; i < ransac_iters; i++)
+ //    {
+ //        rng_index.clear();
+ //
+ //        int j = 0;
+ //        while (j < point_pick)
+ //        {
+ //            int rand_i = random.next() % total_len;
+ //            if (std::find(rng_index.begin(), rng_index.end(), rand_i) != rng_index.end())
+ //            {
+ //                // v contains x
+ //            }
+ //            else
+ //            {
+ //                rng_index.push_back(rand_i);
+ //                j++;
+ //            }
+ //        }
+ //
+ //        cv::Mat A = cv::Mat::zeros(point_pick, 5, CV_64F);
+ //
+ //        for (int i = 0; i < point_pick; i++)
+ //        {
+ //            //A(i,:) = [pts2(1, i), pts2(2, i), 1, -1*pts2(1, i)*pts1(2, i), -1*pts2(2, i)*pts1(2, i)];
+ //
+ //            A.at<double>(i, 0) = rightFilteredPoints[rng_index[i]].x;
+ //            A.at<double>(i, 1) = rightFilteredPoints[rng_index[i]].y;
+ //            A.at<double>(i, 2) = 1;
+ //            A.at<double>(i, 3) = -1 * rightFilteredPoints[rng_index[i]].x * leftFilteredPoints[rng_index[i]].y;
+ //            A.at<double>(i, 4) = -1 * rightFilteredPoints[rng_index[i]].y * leftFilteredPoints[rng_index[i]].y;
+ //
+ //        }
+ //
+ //        cv::Mat y = cv::Mat::zeros(point_pick, 1, CV_64F);
+ //
+ //        for (int i = 0; i < point_pick; i++)
+ //        {
+ //            //A(i,:) = [pts2(1, i), pts2(2, i), 1, -1*pts2(1, i)*pts1(2, i), -1*pts2(2, i)*pts1(2, i)];
+ //            y.at<double>(i, 0) = leftFilteredPoints[rng_index[i]].y;
+ //        }
+ //
+ //        cv::Mat A_pinv = cv::Mat::zeros(A.size().width, A.size().height, CV_64F);
+ //        cv::invert(A, A_pinv, cv::DECOMP_SVD);
+ //
+ //        cv::Mat H_params = A_pinv * y;
+ //
+ //        double data[] = {1, 0, 0, H_params.at<double>(0, 0), H_params.at<double>(1, 0), H_params.at<double>(2, 0),
+ //                         H_params.at<double>(3, 0), H_params.at<double>(4, 0), 1};
+ //
+ //        cv::Mat temp_Hy(3, 3, CV_64F, data);
+ //
+ //        std::vector<cv::Point2f> rk_rng, rk_t;
+ //        rk_rng.reserve(point_pick);
+ //        rk_t.reserve(point_pick);
+ //
+ //        for (int i = 0; i < point_pick; i++)
+ //        {
+ //            rk_rng.push_back(rightFilteredPoints[rng_index[i]]);
+ //        }
+ //
+ //
+ //        cv::perspectiveTransform(rk_rng, rk_t, temp_Hy);
+ //        double error_sum = 0.f;
+ //        double threshold_size = 0.f;
+ //        for (int i = 0; i < point_pick; i++)
+ //        {
+ //            double error = abs(leftFilteredPoints[rng_index[i]].y - rk_t[i].y);
+ //            if (error <= 1)
+ //            {
+ //                error_sum = error_sum + error;
+ //                ++threshold_size;
+ //            }
+ //        }
+ //
+ //        if (threshold_size > 0.5f)
+ //        {
+ //            error_sum = error_sum / threshold_size;
+ //        }
+ //
+ //
+ //        //points2_t = htx(Hy, points2);
+ //        //errors = abs(points1(2, :) - points2_t(2, :));
+ //        //count = ones(size(errors));
+ //        //count(errors > threshold) = 0;
+ //        //align_rate = sum(count(:)) / double(size(count, 2));
+ //
+ //        if (error_sum > max_align_rate)
+ //        {
+ //            max_align_rate = error_sum;
+ //            Hy = temp_Hy;
+ //        }
+ //
+ //        if (max_align_rate > align_rate_earlystop)
+ //        {
+ //            break;
+ //        }
+ //
+ //    }
 //
 //    std::vector<int> mask;
 //
@@ -457,52 +467,52 @@ void Rectification::DirectSelfRectification()
 //            rightFilteredPoints.push_back(rightPoints[i]);
 //        }
 //    }
-*/
+
 
 
 	cv::Mat A = cv::Mat::zeros(static_cast<int>(leftFilteredPoints.size()), 5, CV_64F);
-
+	
 	for (int i = 0; i < leftFilteredPoints.size(); i++)
 	{
 		//A(i,:) = [pts2(1, i), pts2(2, i), 1, -1*pts2(1, i)*pts1(2, i), -1*pts2(2, i)*pts1(2, i)];
-
+	
 		A.at<double>(i, 0) = rightFilteredPoints[i].x;
 		A.at<double>(i, 1) = rightFilteredPoints[i].y;
 		A.at<double>(i, 2) = 1;
 		A.at<double>(i, 3) = -1 * rightFilteredPoints[i].x * leftFilteredPoints[i].y;
 		A.at<double>(i, 4) = -1 * rightFilteredPoints[i].y * leftFilteredPoints[i].y;
 	}
-
+	
 	cv::Mat y = cv::Mat::zeros(static_cast<int>(leftFilteredPoints.size()), 1, CV_64F);
-
+	
 	for (int i = 0; i < leftFilteredPoints.size(); i++)
 	{
 		//A(i,:) = [pts2(1, i), pts2(2, i), 1, -1*pts2(1, i)*pts1(2, i), -1*pts2(2, i)*pts1(2, i)];
 		y.at<double>(i, 0) = leftFilteredPoints[i].y;
 	}
-
+	
 	cv::Mat A_pinv = cv::Mat::zeros(A.size().width, A.size().height, CV_64F);
 	cv::invert(A, A_pinv, cv::DECOMP_SVD);
-
+	
 	cv::Mat H_params = A_pinv * y;
-
+	
 	double data4[] = {
 		1, 0, 0, H_params.at<double>(0, 0), H_params.at<double>(1, 0), H_params.at<double>(2, 0),
 		H_params.at<double>(3, 0), H_params.at<double>(4, 0), 1
 	};
-
+	
 	cv::Mat temp_Hy(3, 3, CV_64F, data4);
-
+	
 	cv::Mat Hy = temp_Hy;
 
 	auto imsize = originalSize;
-	double data[] = {
-		static_cast<double>(imsize.width) / 2, static_cast<double>(imsize.width),
-		static_cast<double>(imsize.width) / 2, 0, 0, static_cast<double>(imsize.height),
-		static_cast<double>(imsize.height),
-		static_cast<double>(imsize.height) / 2
-	};
-	cv::Mat vertex(2, 4, CV_64F, data);
+	// double data[] = {
+	// 	static_cast<double>(imsize.width) / 2, static_cast<double>(imsize.width),
+	// 	static_cast<double>(imsize.width) / 2, 0, 0, static_cast<double>(imsize.height),
+	// 	static_cast<double>(imsize.height),
+	// 	static_cast<double>(imsize.height) / 2
+	// };
+	//cv::Mat vertex(2, 4, CV_64F, data);
 
 
 	//cv::Mat a = cv::Mat::zeros(1, 3, CV_64F);
@@ -586,6 +596,9 @@ void Rectification::DirectSelfRectification()
 		rk_h[i] = vvv;
 	}
 
+
+	//cv::perspectiveTransform(rightFilteredPoints, rk_t,H);
+
 	std::vector<cv::Point2f> rk_tt;
 	cv::convertPointsFromHomogeneous(rk_h, rk_tt);
 
@@ -608,7 +621,8 @@ void Rectification::DirectSelfRectification()
 
 	for (int i = 0; i < leftFilteredPoints.size(); ++i)
 	{
-		double temp = leftFilteredPoints[i].x - rk_t[i].x;
+		//double temp = rightFilteredPoints[i].x - rk_t[i].x;
+		double temp = rk_t[i].x - rightFilteredPoints[i].x;
 		if (temp > error)
 		{
 			error = temp;
@@ -737,23 +751,22 @@ void Rectification::PoseEstimationRectification(const cv::Mat& leftCameraMatrix,
 	// std::cout << "essential finished" << std::endl;
 
 
-	
-	cv::Mat F, E,E2, mask;
+	cv::Mat F, E, E2, mask,mask1,mask2;
 
-	//F = cv::findFundamentalMat(leftFilteredPoints, rightFilteredPoints, cv::FM_8POINT);
+	F = cv::findFundamentalMat(leftFilteredPoints, rightFilteredPoints, cv::FM_8POINT);
 
-	//E2 = leftCameraMatrix.t() * F * rightCameraMatrix;
+	E2 = leftCameraMatrix.t() * F * rightCameraMatrix;
 
 	std::vector<cv::Point2d> leftPoints_, rightPoints_;
 	leftPoints_.reserve(leftPoints.size());
 	rightPoints_.reserve(leftPoints.size());
-	for(int i=0;i<leftPoints.size();i++)
+	for (int i = 0; i < leftPoints.size(); i++)
 	{
-		double left_x = (leftPoints[i].x - leftCameraMatrix.at<double>(0,2))/leftCameraMatrix.at<double>(0,0);
-		double left_y = (leftPoints[i].y - leftCameraMatrix.at<double>(1,2))/leftCameraMatrix.at<double>(1,1);
+		double left_x = (leftPoints[i].x - leftCameraMatrix.at<double>(0, 2)) / leftCameraMatrix.at<double>(0, 0);
+		double left_y = (leftPoints[i].y - leftCameraMatrix.at<double>(1, 2)) / leftCameraMatrix.at<double>(1, 1);
 		cv::Point2d left(left_x, left_y);
-		double right_x = (rightPoints[i].x - rightCameraMatrix.at<double>(0,2))/rightCameraMatrix.at<double>(0,0);
-		double right_y = (rightPoints[i].y - rightCameraMatrix.at<double>(1,2))/rightCameraMatrix.at<double>(1,1);
+		double right_x = (rightPoints[i].x - rightCameraMatrix.at<double>(0, 2)) / rightCameraMatrix.at<double>(0, 0);
+		double right_y = (rightPoints[i].y - rightCameraMatrix.at<double>(1, 2)) / rightCameraMatrix.at<double>(1, 1);
 		cv::Point2d right(right_x, right_y);
 
 		leftPoints_.push_back(left);
@@ -761,33 +774,60 @@ void Rectification::PoseEstimationRectification(const cv::Mat& leftCameraMatrix,
 	}
 	cv::Mat fakeCameraMatrix = cv::Mat::eye(3, 3, CV_64F);
 
-	cv::Mat fakeE;
-	double threshold = rejection_threshold;
-	threshold /= ((leftCameraMatrix.at<double>(0, 0) + rightCameraMatrix.at<double>(0, 0)) / 2 + (leftCameraMatrix.at<double>(1, 1) + rightCameraMatrix.at<double>(1, 1)) / 2) / 2;
 
-	//E = cv::findEssentialMat(leftPoints, rightPoints, leftCameraMatrix, cv::RANSAC, rejection_confidence, rejection_threshold, mask);
-	fakeE = cv::findEssentialMat(leftPoints_, rightPoints_, fakeCameraMatrix, cv::RANSAC, rejection_confidence, threshold, mask);
+	double threshold = rejection_threshold;
+	threshold /= ((leftCameraMatrix.at<double>(0, 0) + rightCameraMatrix.at<double>(0, 0)) / 2 + (leftCameraMatrix.at<
+		double>(1, 1) + rightCameraMatrix.at<double>(1, 1)) / 2) / 2;
+
+	E = cv::findEssentialMat(leftPoints, rightPoints, leftCameraMatrix, cv::RANSAC, rejection_confidence,
+	                         rejection_threshold, mask1);
+	E = cv::findEssentialMat(leftPoints, rightPoints, rightCameraMatrix, cv::RANSAC, rejection_confidence,
+		rejection_threshold, mask2);
+	cv::bitwise_and(mask1, mask2, mask);
+	cv::Mat E3;
+
+
+	leftFilteredPoints.clear();
+	rightFilteredPoints.clear();
+	for(int i=0;i<leftPoints.size();i++)
+	{
+		if(mask.at<unsigned char>(0,i)!=0)
+		{
+			leftFilteredPoints.push_back(leftPoints[i]);
+			rightFilteredPoints.push_back(rightPoints[i]);
+		}
+	}
+
+	//E = cv::findEssentialMat(leftPoints, rightPoints, leftCameraMatrix, cv::RANSAC, rejection_confidence,rejection_threshold, mask);
+
+	findEssentialMatrix(leftFilteredPoints, rightFilteredPoints, E3, leftCameraMatrix, rightCameraMatrix);
+	//E2 = cv::findEssentialMat(leftPoints_, rightPoints_, fakeCameraMatrix, cv::RANSAC, rejection_confidence, threshold, mask);
 	//fakeE = cv::findEssentialMat(leftPoints, rightPoints, fakeCameraMatrix, cv::RANSAC, rejection_confidence,rejection_threshold, mask);
 
 	//cv::recoverPose(E, leftPoints, rightPoints, leftCameraMatrix, relativeRotation, relativeTranslation,mask);
-	cv::recoverPose(fakeE, leftPoints_, rightPoints_, fakeCameraMatrix, relativeRotation, relativeTranslation,mask);
+	//cv::recoverPose(E3, leftPoints_, rightPoints_, fakeCameraMatrix, relativeRotation, relativeTranslation, mask);
+	cv::recoverPose(E3, leftPoints, rightPoints, fakeCameraMatrix, relativeRotation, relativeTranslation,mask);
 	//cv::recoverPose(E2, leftFilteredPoints, rightFilteredPoints, leftCameraMatrix, relativeRotation, relativeTranslation);
-	
 }
 
 
-void Rectification::calcError(std::vector<cv::Point2f> left_points, std::vector<cv::Point2f> right_points)
+void Rectification::calcError()
 {
+	if(homLeft.empty() && homRight.empty())
+	{
+		return;
+	}
+
 	std::vector<cv::Point2f> left_points_projection, right_points_projection;
 
-	cv::perspectiveTransform(left_points, left_points_projection, homLeft);
-	cv::perspectiveTransform(right_points, right_points_projection, homRight);
+	cv::perspectiveTransform(leftFilteredPoints, left_points_projection, homLeft);
+	cv::perspectiveTransform(rightFilteredPoints, right_points_projection, homRight);
 
 	min_error = DBL_MAX;
 	max_error = 0;
-	avg_error = 0;
+	rms_error = 0;
 
-	for (int i = 0; i < left_points.size(); ++i)
+	for (int i = 0; i < left_points_projection.size(); ++i)
 	{
 		double error = abs(left_points_projection[i].y - right_points_projection[i].y);
 		if (min_error > error)
@@ -798,14 +838,15 @@ void Rectification::calcError(std::vector<cv::Point2f> left_points, std::vector<
 		{
 			max_error = error;
 		}
-		avg_error += error;
+		rms_error += error*error;
 	}
 
-	avg_error /= left_points.size();
+	rms_error /= left_points_projection.size();
+	rms_error = sqrt(rms_error);
 
 	std::cout << "min error = " << min_error << std::endl;
 	std::cout << "max error = " << max_error << std::endl;
-	std::cout << "avg error = " << avg_error << std::endl;
+	std::cout << "avg error = " << rms_error << std::endl;
 }
 
 
@@ -834,7 +875,7 @@ double Rectification::getMax_error() const
 	return max_error;
 }
 
-double Rectification::getAvg_error() const
+double Rectification::getRms_error() const
 {
-	return avg_error;
+	return rms_error;
 }

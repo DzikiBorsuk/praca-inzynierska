@@ -203,10 +203,6 @@ void FeatureMatching::match2Keypoints()
 	}
 	printf("-- Max dist : %f \n", max_dist);
 	printf("-- Min dist : %f \n", min_dist);
-	//-- Draw only "good" matches (i.e. whose distance is less than 2*min_dist,
-	//-- or a small arbitrary value ( 0.02 ) in the event that min_dist is very
-	//-- small)
-	//-- PS.- radiusMatch can also be used here.
 	std::vector<int> good_l;
 	std::vector<int> good_r;
 	for (int i = 0; i < descriptor_left.rows; i++)
@@ -220,11 +216,9 @@ void FeatureMatching::match2Keypoints()
 			good_r.push_back(matches[i].trainIdx);
 		}
 	}
-	//-- Draw only "good" matches
 	drawMatches(left, keypoints_left, right, keypoints_right,
 	            good_matches, features, cv::Scalar::all(-1), cv::Scalar::all(-1),
 	            std::vector<char>(), cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
-	//-- Show detected matches
 
 	cv::KeyPoint::convert(keypoints_left, points_left, good_l); //Todo:  poprawic
 	cv::KeyPoint::convert(keypoints_right, points_right, good_r);

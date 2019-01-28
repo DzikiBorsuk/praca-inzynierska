@@ -57,24 +57,25 @@ int main()
 	//    stereo.rectifyImage();
 	//    stereo.computeDisp();
 
-	
-
 
 	Stereo stereo;
 
 	Mat leftCam, leftDist, rightCam, rightDist;
 
-	stereo.loadLeftImage("l.JPG", "out_camera_data.xml");
-	stereo.loadRightImage("s.JPG", "out_camera_data.xml");
-	
+	// stereo.loadLeftImage("s.JPG", "out_camera_data.xml");
+	// stereo.loadRightImage("r.JPG", "out_camera_data.xml");
+
+	stereo.loadLeftImage("nowy nowy test/21/l.jpg", "right.yml");
+	stereo.loadRightImage("nowy nowy test/21/r.jpg", "right.yml");
+	stereo.equalizeImages();
+
 	//stereo.loadLeftImage("zdj/8/l.png", "zdj/p9.yml");
 	//stereo.loadRightImage("zdj/8/r.png", "zdj/s9.yml");
 
 
-
-	stereo.featureMatching.setDetector(FeatureMatching::Detectors::SURF, {100, 4, 3, 0});
-	stereo.featureMatching.setDescriptor(FeatureMatching::Detectors::SURF, {100, 4, 3, 0});
-	stereo.featureMatching.setMatcher(0, std::vector<double>());
+	stereo.featureMatching.setDetector(FeatureMatching::Detectors::SURF, {100, 5, 5, 0});
+	stereo.featureMatching.setDescriptor(FeatureMatching::Detectors::SURF, {100, 5, 5, 0});
+	stereo.featureMatching.setMatcher(0, {0.2});
 	stereo.featureMatching.detect2Keypoints();
 	stereo.featureMatching.extract2Descriptor();
 
@@ -83,7 +84,7 @@ int main()
 	stereo.rect.setPoints(stereo.featureMatching.getPoints_left(), stereo.featureMatching.getPoints_right());
 	//stereo.rect.setCameraMatrix(stereo.calib.getCameraMatrix());
 
-	stereo.rect.rejectOutliers(Rectification::RejectionMethod::RANSAC, 7, 0.995, 2000);
+	stereo.rect.rejectOutliers(Rectification::RejectionMethod::RANSAC, 1, 0.995, 2000);
 	//stereo.rect.rectifyImages(Rectification::RectificationMethod::DSR);
 	//stereo.rect.estimatePose();
 	//stereo.rect.rectifyImages(Rectification::RectificationMethod::POSE_ESTIMATION);
@@ -93,16 +94,41 @@ int main()
 	//                           stereo.getOrgRight(),
 	//                           rightCam, rightDist);
 
-	stereo.rect.rectifyImages(Rectification::RectificationMethod::POSE_ESTIMATION, stereo.getOrgLeft().image,
+	stereo.rect.rectifyImages(Rectification::RectificationMethod::DSR, stereo.getOrgLeft().image,
 	                          stereo.getOrgLeft().cameraMatrix, stereo.getOrgLeft().distortionCoefficient,
 	                          stereo.getOrgRight().image,
 	                          stereo.getOrgRight().cameraMatrix, stereo.getOrgRight().distortionCoefficient);
 
 
+	cv::Mat left = stereo.rect.getRectImageLeft();
+	cv::Mat right = stereo.rect.getRectImageRight();
+
+	ImageStructure imleft, imright;
+	imleft.image = left;
+	imleft.cameraMatrix = stereo.getLeft().cameraMatrix.clone();
+
+	imright.image = right;
+	imright.cameraMatrix = stereo.getRight().cameraMatrix.clone();
+
+	imleft.resize(Size(1344, 1008));
+	imright.resize(Size(1344, 1008));
+
+	imwrite("rect/1.png", imleft.image);
+	imwrite("rect/2.png", imright.image);
+
+
+	cv::FileStorage fs("rect/data.yml", cv::FileStorage::WRITE);
+
+	fs << "left_camera_matrix" << imleft.cameraMatrix;
+	fs << "right_camera_matrix" << imright.cameraMatrix;
+
+	fs.release();
+
 	stereo.disp.initImages(stereo.rect.getRectImageLeft(), stereo.rect.getRectImageRight());
 
+
 	//stereo.disp.initSGBM(-5,320,5,150,3500);
-	stereo.disp.initSGBM(0,80,3,150,3500);
+	stereo.disp.initSGBM(-80, 80 + 80, 3, 150, 3500);
 
 	stereo.disp.SGBM();
 

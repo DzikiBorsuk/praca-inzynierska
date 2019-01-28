@@ -82,6 +82,8 @@ public slots:
 
        auto elapsed = timer.elapsed() / 1000.0;
 
+       stereo->rect.calcError();
+
        QString msg = "Rectification finished. Time " + QString::number(elapsed) + "s";
 
        emit finish_imageRectification(msg);

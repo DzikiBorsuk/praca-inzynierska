@@ -36,74 +36,70 @@
 //    }
 //}
 
-Stereo::Stereo(const std::string &_left, const std::string &_right, const std::string &_cameraParamsFile)
+Stereo::Stereo(const std::string& _left, const std::string& _right, const std::string& _cameraParamsFile)
 {
-    // left = cv::imread(_left);
-    // right = cv::imread(_right);
-    //
-    //
-    // if (!_cameraParamsFile.empty())
-    // {
-    //     left = calib.undistort(left);
-    //     right = calib.undistort(right);
-    // }
+	// left = cv::imread(_left);
+	// right = cv::imread(_right);
+	//
+	//
+	// if (!_cameraParamsFile.empty())
+	// {
+	//     left = calib.undistort(left);
+	//     right = calib.undistort(right);
+	// }
 
 	loadLeftImage(_left, _cameraParamsFile);
 	loadRightImage(_right, _cameraParamsFile);
-
-
-	
 }
 
-void Stereo::loadLeftImage(const std::string &image_path, const std::string &camera_params_path)
+void Stereo::loadLeftImage(const std::string& image_path, const std::string& camera_params_path)
 {
-    orgLeft.image = cv::imread(image_path);
-    if (!camera_params_path.empty())
-    {
-        calib.loadParams(camera_params_path);
-		if(!calib.getCameraMatrix().empty())
+	orgLeft.image = cv::imread(image_path);
+	if (!camera_params_path.empty())
+	{
+		calib.loadParams(camera_params_path);
+		if (!calib.getCameraMatrix().empty())
 		{
-			orgLeft.cameraMatrix = calib.getCameraMatrix();
-			orgLeft.distortionCoefficient = calib.getDistortionCoefficient();
-			left.distortionCoefficient = calib.getDistortionCoefficient();
-			left.cameraMatrix = calib.getCameraMatrixAfterUndistortion();
+			orgLeft.cameraMatrix = calib.getCameraMatrix().clone();
+			orgLeft.distortionCoefficient = calib.getDistortionCoefficient().clone();
+			left.distortionCoefficient = calib.getDistortionCoefficient().clone();
+			left.cameraMatrix = calib.getCameraMatrixAfterUndistortion().clone();
 		}
-    }
-    left.image = calib.undistort(orgLeft.image);
-    if (left.image.empty())
+	}
+	left.image = calib.undistort(orgLeft.image);
+	if (left.image.empty())
 	{
 		left = orgLeft;
 	}
-    featureMatching.loadLeftImage(left.image);
-
+	//equalizeImages();
+	featureMatching.loadLeftImage(left.image);
 }
 
-void Stereo::loadRightImage(const std::string &image_path, const std::string &camera_params_path)
+void Stereo::loadRightImage(const std::string& image_path, const std::string& camera_params_path)
 {
-    orgRight.image = cv::imread(image_path);
-    if (!camera_params_path.empty())
-    {
-        calib.loadParams(camera_params_path);
+	orgRight.image = cv::imread(image_path);
+	if (!camera_params_path.empty())
+	{
+		calib.loadParams(camera_params_path);
 		if (!calib.getCameraMatrix().empty())
 		{
-			orgRight.cameraMatrix = calib.getCameraMatrix();
-			orgRight.distortionCoefficient = calib.getDistortionCoefficient();
-			right.distortionCoefficient = calib.getDistortionCoefficient();
-			right.cameraMatrix = calib.getCameraMatrixAfterUndistortion();
+			orgRight.cameraMatrix = calib.getCameraMatrix().clone();
+			orgRight.distortionCoefficient = calib.getDistortionCoefficient().clone();
+			right.distortionCoefficient = calib.getDistortionCoefficient().clone();
+			right.cameraMatrix = calib.getCameraMatrixAfterUndistortion().clone();
 		}
-    }
-    right.image = calib.undistort(orgRight.image);
-    if (right.image.empty())
+	}
+	right.image = calib.undistort(orgRight.image);
+	if (right.image.empty())
 	{
 		right = orgRight;
 	}
-    featureMatching.loadRightImage(right.image);
-
+	//equalizeImages();
+	featureMatching.loadRightImage(right.image);
 }
 
 void Stereo::rectify2Image()
 {
-
 }
 
 void Stereo::rectify3Image()
@@ -111,17 +107,42 @@ void Stereo::rectify3Image()
 	//TODO implementation
 }
 
-void Stereo::saveRectifiedImages(const std::string & directory)
+void Stereo::equalizeImages()
+{
+	cv::Size leftSize = orgLeft.image.size();
+	cv::Size rightSize = orgRight.image.size();
+
+	if (!orgLeft.image.empty() && !orgLeft.image.empty())
+	{
+		if (leftSize.width != rightSize.width)
+		{
+			if (leftSize.width > rightSize.width)
+			{
+				orgLeft.resize(rightSize);
+				left.resize(rightSize);
+			}
+			else
+			{
+				orgRight.resize(leftSize);
+				right.resize(leftSize);
+			}
+		}
+	}
+
+	featureMatching.loadImages(left.image, right.image);
+}
+
+void Stereo::saveRectifiedImages(const std::string& directory)
 {
 	cv::imwrite(directory + "/left.png", rect.getRectImageLeft());
 	cv::imwrite(directory + "/right.png", rect.getRectImageRight());
 
-	cv::FileStorage fs(directory+"/rectification_data.yml", cv::FileStorage::WRITE);
+	cv::FileStorage fs(directory + "/rectification_data.yml", cv::FileStorage::WRITE);
 
-    fs << "camera_matrix" << calib.getCameraMatrix();
-    fs << "distortion_coefficients" << calib.getDistortionCoefficient();
-    fs << "relativeRotation" << rect.relativeRotation;
-    fs << "relativeTranslation" << rect.relativeTranslation;
+	fs << "camera_matrix" << calib.getCameraMatrix();
+	fs << "distortion_coefficients" << calib.getDistortionCoefficient();
+	fs << "relativeRotation" << rect.relativeRotation;
+	fs << "relativeTranslation" << rect.relativeTranslation;
 	fs << "leftRotation" << rect.leftRotation;
 	fs << "rightRotation" << rect.rightRotation;
 
@@ -130,117 +151,50 @@ void Stereo::saveRectifiedImages(const std::string & directory)
 
 void Stereo::computeDisp()
 {
+	//disp.SGBM(rect.getLeft(), rect.getRight());
 
+	//cv::Mat l, r;
+	//cv::resize(rect.getLeft(), l, {1920, 1080});
+	//cv::resize(rect.getRight(), r, {1920, 1080});
 
-    //disp.SGBM(rect.getLeft(), rect.getRight());
-
-    //cv::Mat l, r;
-    //cv::resize(rect.getLeft(), l, {1920, 1080});
-    //cv::resize(rect.getRight(), r, {1920, 1080});
-
-    //disp.SGBM(left, right);
-
+	//disp.SGBM(left, right);
 }
 
 void Stereo::show()
 {
-
 }
 
 void Stereo::match_feautures()
 {
-    // if (!left.data || !right.data)
-    // {
-    //     std::cout << " --(!) Error reading images " << std::endl;
-    //     return;
-    // }
-    // //-- Step 1: Detect the keypoints using SURF Detector, compute the descriptors
-    // int minHessian = 400;
-    // cv::Ptr<cv::xfeatures2d::SURF> detector = cv::xfeatures2d::SURF::create();
-    // detector->setHessianThreshold(minHessian);
-    // cv::Mat descriptors_1, descriptors_2;
-    // detector->detectAndCompute(left, cv::Mat(), keypoints_left, descriptors_1);
-    // detector->detectAndCompute(right, cv::Mat(), keypoints_right, descriptors_2);
-    // //-- Step 2: Matching descriptor vectors using FLANN matcher
-    // cv::FlannBasedMatcher matcher;
-    // std::vector<cv::DMatch> matches;
-    // matcher.match(descriptors_1, descriptors_2, matches);
-    // double max_dist = 0;
-    // double min_dist = 200;
-    // //-- Quick calculation of max and min distances between keypoints
-    // for (int i = 0; i < descriptors_1.rows; i++)
-    // {
-    //     double dist = matches[i].distance;
-    //     if (dist < min_dist)
-    //     { min_dist = dist; }
-    //     if (dist > max_dist)
-    //     { max_dist = dist; }
-    // }
-    // printf("-- Max dist : %f \n", max_dist);
-    // printf("-- Min dist : %f \n", min_dist);
-    // //-- Draw only "good" matches (i.e. whose distance is less than 2*min_dist,
-    // //-- or a small arbitrary value ( 0.02 ) in the event that min_dist is very
-    // //-- small)
-    // //-- PS.- radiusMatch can also be used here.
-    // std::vector<cv::DMatch> good_matches;
-    // std::vector<int> good_l;
-    // std::vector<int> good_r;
-    // for (int i = 0; i < descriptors_1.rows; i++)
-    // {
-    //     if (matches[i].distance <= std::max(2 * min_dist, 0.05))
-    //     {
-    //         good_matches.push_back(matches[i]);
-    //         //good.push_back(i);//Todo:  poprawic
-    //
-    //         good_l.push_back(matches[i].queryIdx);
-    //         good_r.push_back(matches[i].trainIdx);
-    //     }
-    // }
-    // //-- Draw only "good" matches
-    // cv::Mat img_matches;
-    // drawMatches(left, keypoints_left, right, keypoints_right,
-    //             good_matches, img_matches, cv::Scalar::all(-1), cv::Scalar::all(-1),
-    //             std::vector<char>(), cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
-    // //-- Show detected matches
-    //
-    // cv::KeyPoint::convert(keypoints_left, lk, good_l);//Todo:  poprawic
-    // cv::KeyPoint::convert(keypoints_right, rk, good_r);
-    //
-    //
-    // //cv::namedWindow("Good Matches", cv::WINDOW_NORMAL);
-    // //cv::imshow("Good Matches", img_matches);
-    // //cv::resizeWindow("Good Matches", 1200, 900);
-    // for (int i = 0; i < (int) good_matches.size(); i++)
-    // {
-    //     printf("-- Good Match [%d] Keypoint 1: %d  -- Keypoint 2: %d  \n", i, good_matches[i].queryIdx,
-    //            good_matches[i].trainIdx);
-    // }
-    // //cv::waitKey(0);
-    // std::cout << "a" << std::endl;
+//TODO: implementation
 }
 
-const ImageStructure &Stereo::getLeft() const
+const ImageStructure& Stereo::getLeft() const
 {
-    return left;
+	return left;
 }
-const ImageStructure &Stereo::getOrgLeft() const
+
+const ImageStructure& Stereo::getOrgLeft() const
 {
 	return orgLeft;
 }
-const ImageStructure &Stereo::getMiddle() const
+
+const ImageStructure& Stereo::getMiddle() const
 {
-    return middle;
+	return middle;
 }
-const ImageStructure &Stereo::getOrgMiddle() const
+
+const ImageStructure& Stereo::getOrgMiddle() const
 {
 	return orgMiddle;
 }
-const ImageStructure &Stereo::getRight() const
+
+const ImageStructure& Stereo::getRight() const
 {
-    return right;
+	return right;
 }
-const ImageStructure &Stereo::getOrgRight() const
+
+const ImageStructure& Stereo::getOrgRight() const
 {
 	return orgRight;
 }
-
