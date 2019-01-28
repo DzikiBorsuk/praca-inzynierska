@@ -3,16 +3,19 @@
 
 #include <QMainWindow>
 #include <QSqlTableModel>
+#include <QThread>
 #include "../src/Stereo.h"
+#include "expensivecomputingworker.h"
 
 #include <vector>
 #include <string>
 
-namespace Ui {
+namespace Ui
+{
 class MainWindow;
 }
 
-class MainWindow : public QMainWindow
+class MainWindow: public QMainWindow
 {
     Q_OBJECT
 
@@ -20,15 +23,6 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
-private:
-
-    static void load_calibration_images(MainWindow *window, std::vector<std::string> imagesList);
-
-    static void run_calibration(MainWindow *window);
-
-    static void run_feature_matching(MainWindow *window);
-
-    static void compute_disp(MainWindow *window);
 
 private slots:
 
@@ -58,11 +52,55 @@ private slots:
 
     void on_button_matchFeatures_clicked();
 
+    void on_comboBox_detector_currentIndexChanged(int index);
+
+    void on_comboBox_descriptor_currentIndexChanged(int index);
+
+    void on_comboBox_matcher_currentIndexChanged(int index);
+
+    void on_pushButton_runRectification_clicked();
+
+    void on_checkBox_showRectified_stateChanged(int arg1);
+
+
+     //########################### calibration tab ###########################
+
+    void load_calibration_images_finished(const QString& msg);
+
+    void calibration_finished(const QString& msg);
+
+    //########################### feature matching tab ###########################
+
+    void feature_matching_finished(const QString& msg);
+
+    //########################### rectification tab ###########################
+
+    void image_rectification_finished(const QString& msg);
+
+    void on_actionSave_rectified_images_triggered();
+
+    //########################### disparity tab ###########################
+
+    void compute_disparity_finished(const QString& msg);
+
+    void on_checkBox_disparityFilter_stateChanged(int arg1);
+
+    void on_comboBox_colormap_currentIndexChanged(int index);
+
+    void on_actionEqualize_images_triggered();
+
+    void on_actionSave_disparity_triggered();
+
+    void on_comboBox_filterType_currentIndexChanged(int index);
+
 private:
     Ui::MainWindow *ui;
 
     Stereo stereo;
 
+    expensiveComputingWorker *worker;
+
+    QThread *computingThread;
 
     void resizeEvent(QResizeEvent *event) override;
 
@@ -70,28 +108,39 @@ private:
 
     bool newImages;
 
-     void init_calibration_tab();
+    void init_calibration_tab();
 
-     void load_calibration_images_init();
+    void load_calibration_images_init();
 
-     void show_calibration_image(int i, bool undistorted);
+    void show_calibration_image(int i, bool undistorted);
 
-     //########################### feature matching tab ###########################
+    //########################### feature matching tab ###########################
 
-     void show_matchedFeatures();
+    void init_feature_matching_tab();
+
+    void show_matchedFeatures();
 
 
-     //########################### disparity tab ###########################
+    //########################### rectification tab ###########################
 
-     bool compute_disparity;
-     bool is_computing_disparity;
+    void init_rectification_tab();
+
+    void show_rectified_images();
+
+    //########################### disparity tab ###########################
+
+
+    bool compute_disparity;
+    bool is_computing_disparity;
 
     void compute_disp_init();
     //void compute_disp();
-    void show_disp();
+
+    void disparity_filter();
+    void show_disparity();
+
 
     void init_disparity_tab();
-
 
 };
 

@@ -7,11 +7,13 @@
 
 #include <opencv2/core.hpp>
 #include <opencv2/ximgproc.hpp>
+#include <opencv2/stereo/stereo.hpp>
 
 class Disparity
 {
 public:
 
+	cv::Mat left_image, right_image, left_preview, right_preview;
     cv::Mat left_disp, right_disp, filtered_disp;
 
     cv::Mat vis_left, vis_right, vis_filter;
@@ -20,13 +22,56 @@ public:
     cv::Ptr<cv::StereoSGBM> left_matcher;
     cv::Ptr<cv::StereoMatcher> right_matcher;
 
-    int minDisparity, maxDisparity, blockSize, P1, P2, disp12MaxDiff, preFilterCap, uniquenessRatio,
+	float contrast;
+
+	cv::Ptr<cv::ximgproc::DisparityWLSFilter> wls_filter;
+
+    int minDisparity, numDisparity, blockSize, P1, P2, disp12MaxDiff, preFilterCap, uniquenessRatio,
         speckleWindowSize, speckleRange, mode;
+
+	int filterType;
+
+	double wlsLambda, wlsSigma, fbsSpatial, fbsLuma, fbsChroma, fbsLambda;
+
+	void setFilterType(int filter_type)
+	{
+		filterType = filter_type;
+	}
+
+	void setWlsLambda(double wls_lambda)
+	{
+		wlsLambda = wls_lambda;
+	}
+
+	void setWlsSigma(double wls_sigma)
+	{
+		wlsSigma = wls_sigma;
+	}
+
+	void setFbsSpatial(double fbs_spatial)
+	{
+		fbsSpatial = fbs_spatial;
+	}
+
+	void setFbsLuma(double fbs_luma)
+	{
+		fbsLuma = fbs_luma;
+	}
+
+	void setFbsChroma(double fbs_chroma)
+	{
+		fbsChroma = fbs_chroma;
+	}
+
+	void setFbsLambda(double fbs_lambda)
+	{
+		fbsLambda = fbs_lambda;
+	}
 
     void setMatcher()
     {
         left_matcher->setMinDisparity(minDisparity);
-        left_matcher->setNumDisparities(maxDisparity - minDisparity);
+        left_matcher->setNumDisparities(numDisparity);
         left_matcher->setBlockSize(blockSize);
         left_matcher->setP1(P1);
         left_matcher->setP2(P2);
@@ -59,13 +104,20 @@ public:
                   int P1 = 0,
                   int P2 = 0,
                   int disp12MaxDiff = 0,
-                  int preFilterCap = 0,
+                  int preFilterCap = 1,
                   int uniquenessRatio = 0,
                   int speckleWindowSize = 0,
                   int speckleRange = 0,
                   int mode = MODE_SGBM);
 
-    void SGBM(const cv::Mat &left, const cv::Mat &right);
+	void initImages(const cv::Mat& left, const cv::Mat& right);
+
+    void SGBM();
+
+	void filterDisparity();
+
+	const cv::Mat& getDisparity(int color = -1);
+	const cv::Mat& getDisparityFiltered(int color = -1);
 
     int getMinDisparity() const
     {
@@ -75,13 +127,13 @@ public:
     {
         this->minDisparity = minDisparity;
     }
-    int getMaxDisparity() const
+    int getNumDisparity() const
     {
-        return maxDisparity;
+        return  numDisparity;
     }
-    void setMaxDisparity(int numDisparities)
+    void setNumDisparity(int numDisparities)
     {
-        this->maxDisparity = numDisparities;
+        this->numDisparity = numDisparities;
     }
     int getBlockSize() const
     {
@@ -154,6 +206,10 @@ public:
     void setMode(int mode)
     {
         this->mode = mode;
+    }
+	void setContrast(float contrast)
+    {
+		this->contrast = contrast;
     }
 
 };
