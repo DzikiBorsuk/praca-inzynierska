@@ -503,6 +503,10 @@ void MainWindow::on_button_setMatcher_clicked()
 
 void MainWindow::on_button_matchFeatures_clicked()
 {
+    on_button_setDetector_clicked();
+    on_button_setDescriptor_clicked();
+    on_button_setMatcher_clicked();
+
     this->ui->label_status->setText("Matching");
 
     QMetaObject::invokeMethod( worker, "runFeatureMatching",Q_ARG(Stereo*, &stereo));
